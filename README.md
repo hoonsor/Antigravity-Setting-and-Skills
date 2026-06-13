@@ -19,7 +19,7 @@
 - **全域技能架構**：整合了上千個 AI 自訂技能，為前端、後端、自動化等各領域提供即時的技術手冊與 SOP 指引。
 - **專案狀態自動監控 (Project Monitor)**：透過內部腳本實時監控所有子專案的進度與變更歷程，並自動同步至專案狀態呈現網站。
 - **Git 自動推送助手**：在代碼變更完成後，自動更新 README 文件，並提供語義化的 Commit 提交與遠端推送。
-- **高度客製化工作流**：支持全域工作流（Global Workflows），將多步驟的複雜任務（如文件整理、程式碼審查）自動化執行。
+- **AntiGravity 專屬懶人包**：一鍵整合 NotebookLM MCP、Firebase MCP、GitHub CLI、Obsidian MCP (MCPVault)、生圖指引與開工/收工/專案初始化流程，極大簡化開發環境配置。
 
 ---
 
@@ -55,6 +55,14 @@ python C:\Users\hoonsor\.gemini\config\skills\hoonsor-project-monitor\scripts\sy
 
 ```text
 skills/
+ ├── 00-install-all/              # 一次安裝全部懶人包技能
+ ├── 01-notebooklm/               # 連接 NotebookLM MCP 技能
+ ├── 02-github/                   # 連接 GitHub CLI 技能
+ ├── 03-firebase/                 # 連接 Firebase MCP 技能
+ ├── 04-draw/                     # 生圖指引技能
+ ├── 05-workflow/                 # 開工/收工/專案初始化流程技能
+ ├── 06-obsidian/                 # 連接 Obsidian MCP (MCPVault) 技能
+ ├── 09-AntiGravity專屬懶人包.md  # AntiGravity 懶人包核心指引文件
  ├── ab-test-setup/               # A/B 測試設置技能
  ├── hoonsor-project-monitor/     # 專案狀態監控與同步模組
  ├── hoonsor-git-push-assistant/  # Git 推送與 README 自動化助手
@@ -65,6 +73,10 @@ skills/
 ---
 
 ## 🔄 最新更新 (Recent Updates)
+
+### v1.2.0 (2026-06-13)
+- 安裝 AntiGravity 專屬懶人包核心指引文件及 7 個關聯的懶人包技能。
+- 清除先前於 D 槽誤裝的檔案並完成正確的 C 槽本地安裝與 Git 推送。
 
 ### v1.1.0 (2026-06-08)
 - 新增 `agent-reach` 全域技能，修復 Hatchling 打包 Bug，本地安裝並同步監控網站。
