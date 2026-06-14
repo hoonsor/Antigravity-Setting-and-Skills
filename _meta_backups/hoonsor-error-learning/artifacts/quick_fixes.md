@@ -51,6 +51,14 @@
 | `DEPLOYMENT_FAILED` | 查看 Vercel Function logs 而非 Build logs | — |
 | `冷凍技能數量顯示 0 / 掃描跳過` | 檢查目錄深度是否為多層級（如 `_Skill_Vault`），改用兩層深度遍歷 | #8 |
 | `同步資料後網頁無頁籤或無新欄位` | 檢查前端 React 組件與 Hook 是否已同步編寫對應的渲染與資料讀取邏輯 | #9 |
+| `dotenv/config` / `worktree` | 全新 worktree 目錄下需先執行 `npm install` (或使用鏡像源) 以還原依賴套件 | #10 |
+
+## React / 前端
+
+| 錯誤關鍵字 | 正確解法 | 教訓 # |
+|-----------|---------|:-----:|
+| `duplicate key` | 將 React 迴圈中的 key 屬性改為唯一的欄位值（如 `kw.trigger`） | #11 |
+| `hydration mismatch` / `bis_register` | 同步在 `<html>` 與 `<body>` 上加上 `suppressHydrationWarning` 屬性 | #12 |
 
 ---
 

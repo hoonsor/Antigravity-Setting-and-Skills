@@ -2,10 +2,10 @@
   "title": "hoonsor-error-learning 錯誤學習知識庫",
   "summary": "從歷次對話中萃取的錯誤教訓、無效嘗試模式、正確解法，用於避免重複犯錯和節省 tokens。每次呼叫 hoonsor-error-learning 技能後自動更新。",
   "created_at": "2026-04-22T21:14:00+08:00",
-  "updated_at": "2026-06-14T21:23:00+08:00",
-  "total_lessons": 9,
+  "updated_at": "2026-06-14T23:20:00+08:00",
+  "total_lessons": 12,
   "total_estimated_tokens_saved": 0,
-  "total_estimated_tokens_wasted_recorded": 91000,
+  "total_estimated_tokens_wasted_recorded": 103000,
   "references": [
     {
       "type": "conversation",
@@ -27,6 +27,13 @@
       "title": "全域技能庫 #開工 #架構 指令更新與冷凍技能網站同步",
       "date": "2026-06-14",
       "lessons_extracted": 2
+    },
+    {
+      "type": "conversation",
+      "id": "c65ea7c7-c473-453c-967c-61322cd294dd",
+      "title": "系統設定全域規則與工作流完全移除重構與防爆修復",
+      "date": "2026-06-14",
+      "lessons_extracted": 3
     }
   ],
   "tags": ["error-learning", "token-optimization", "troubleshooting", "knowledge-base"]

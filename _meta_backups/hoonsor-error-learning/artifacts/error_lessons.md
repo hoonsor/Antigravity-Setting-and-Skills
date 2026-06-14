@@ -18,6 +18,9 @@
 | 7 | lucide-react 圖示匯出遺失 | 依賴 | 🟡 | — | ~5,000 | 2026-06-13 |
 | 8 | 技能掃描器忽視多層目錄 | 邏輯 | 🟡 | TW-04 | ~4,000 | 2026-06-14 |
 | 9 | Web 專案僅同步數據未更新 React UI | 前端 | 🟡 | TW-02 | ~6,000 | 2026-06-14 |
+| 10 | 全新 Git Worktree 依賴缺失 | 環境 | 🟡 | TW-04 | ~9,000 | 2026-06-14 |
+| 11 | React 迴圈渲染重複 Key 錯誤 | 前端 | 🟡 | — | 0 | 2026-06-14 |
+| 12 | Next.js 頁面 Hydration 警告未除 | 前端 | 🟡 | TW-01 | ~3,000 | 2026-06-14 |
 
 ---
 
@@ -356,4 +359,103 @@ Next.js / Vercel Build 失敗：
 
 ### 📎 關聯
 - 對話 ID: `9f2855d0-3025-4ba5-930f-90da6b57ff72`
+- 日期: 2026-06-14
+
+---
+
+## 📌 教訓 #10: 全新 Git Worktree 依賴缺失
+
+**錯誤分類**: 環境 / 依賴
+**嚴重等級**: 🟡 中等
+**Token 浪費模式**: TW-04（環境假設錯誤）
+**預估浪費 Tokens**: ~9,000
+
+### 症狀
+在全新 worktree 中直接執行 `npx prisma generate` 報錯：
+```
+Error: Cannot find module 'dotenv/config'
+```
+隨後執行 `npm install` 時因網絡不穩拋出 `network aborted (ECONNRESET)` 及 `EPERM` 權限錯誤導致中止。
+
+### 根因分析
+全新 Git Worktree 是空白資料夾，尚未還原 `node_modules` 依賴。而在國內或特定網路環境下，直連 NPM 官方 registry 容易中慢。
+
+### ❌ 無效嘗試（避免重蹈覆轍）
+1. 直接嘗試執行 prisma 命令，假設 node_modules 已存在。
+2. 直連 npm registry 反覆重試，遇到網絡中斷與暫時性權限鎖定。
+
+### ✅ 正確解法
+1. 遇到 clean worktree 目錄，必須先執行 `npm install` 還原依賴。
+2. 如遇連線中斷，應使用淘寶鏡像源 `npm install --registry=https://registry.npmmirror.com` 加快安裝並避免 aborted。
+
+### 🛡️ 預防措施
+- 新建或切換至 worktree 時，務必先還原依賴。
+- 在網路不穩定地區開發時，預設在 npm 安裝指令後加上 `--registry=https://registry.npmmirror.com`。
+
+### 📎 關聯
+- 對話 ID: `c65ea7c7-c473-453c-967c-61322cd294dd`
+- 日期: 2026-06-14
+
+---
+
+## 📌 教訓 #11: React 迴圈渲染重複 Key 錯誤
+
+**錯誤分類**: 前端
+**嚴重等級**: 🟡 中等
+**Token 浪費模式**: 無
+**預估浪費 Tokens**: 0
+
+### 症狀
+瀏覽器 Console 拋出錯誤：
+```
+Encountered two children with the same key, 'hoonsor-project-monitor'
+```
+
+### 根因分析
+在 `SystemView.tsx` 中，使用 `.map()` 渲染 `KEYWORDS` 清單時設定了 `key={kw.skill}`。但由於有兩個不同的關鍵字（「#架構」與「#狀態」）皆對應到同一個技能 `hoonsor-project-monitor`，造成 React 獲得了重複的 key 值。
+
+### ❌ 無效嘗試
+無（一次成功定位並修復）。
+
+### ✅ 正確解法
+將 React 的 loop key 更改為唯一的鍵值，在此處改用 `key={kw.trigger}`（因為 trigger 描述如「#架構」是唯一的）。
+
+### 🛡️ 預防措施
+- 使用 React 的 `.map()` 渲染清單時，必須確保作為 `key` 的屬性在資料集內是絕對唯一的。
+- 不要盲目使用 `kw.skill` 或 `id`，如果這些值在多條數據中可能重複，應結合其他欄位或使用唯一值。
+
+### 📎 關聯
+- 對話 ID: `c65ea7c7-c473-453c-967c-61322cd294dd`
+- 日期: 2026-06-14
+
+---
+
+## 📌 教訓 #12: Next.js 頁面 Hydration 警告未除
+
+**錯誤分類**: 前端
+**嚴重等級**: 🟡 中等
+**Token 浪費模式**: TW-01（盲目重試）
+**預估浪費 Tokens**: ~3,000
+
+### 症狀
+在 `<html>` 上加上了 `suppressHydrationWarning` 後，本機依然報錯：
+```
+A tree hydrated but some attributes of the server rendered HTML didn't match the client properties
+```
+
+### 根因分析
+React 的 `suppressHydrationWarning` 屬性**僅會作用在單層標籤上**（意即僅在它被宣告的那一層標籤本身有效，不會遞迴向下作用在子標籤上）。當瀏覽器擴充功能（外掛，如 1Password 等）將屬性注入到 `<body>` 標籤上時，僅在 `<html>` 上標記是無法忽略 mismatch 的。
+
+### ❌ 無效嘗試
+1. 僅在 `<html>` 標籤上加 `suppressHydrationWarning`，重整後仍然報錯。
+
+### ✅ 正確解法
+除了 `<html>` 外，同時在 **`<body>`** 標籤上也加上 `suppressHydrationWarning`。
+
+### 🛡️ 預防措施
+- 遇到 Hydration Warning 時，仔細觀察錯誤訊息中到底是在哪一個 tag 上發生了 mismatch（是 html, body 還是 div）。
+- 對於容易被外掛（密碼管理器、翻譯外掛）修改的標籤（如 html 和 body），建議同時加上 `suppressHydrationWarning`。
+
+### 📎 關聯
+- 對話 ID: `c65ea7c7-c473-453c-967c-61322cd294dd`
 - 日期: 2026-06-14
