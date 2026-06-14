@@ -2,10 +2,10 @@
   "title": "hoonsor-error-learning 錯誤學習知識庫",
   "summary": "從歷次對話中萃取的錯誤教訓、無效嘗試模式、正確解法，用於避免重複犯錯和節省 tokens。每次呼叫 hoonsor-error-learning 技能後自動更新。",
   "created_at": "2026-04-22T21:14:00+08:00",
-  "updated_at": "2026-04-22T21:14:00+08:00",
-  "total_lessons": 4,
+  "updated_at": "2026-06-14T21:23:00+08:00",
+  "total_lessons": 9,
   "total_estimated_tokens_saved": 0,
-  "total_estimated_tokens_wasted_recorded": 45000,
+  "total_estimated_tokens_wasted_recorded": 91000,
   "references": [
     {
       "type": "conversation",
@@ -19,6 +19,13 @@
       "id": "a8a8d866-7ee5-4772-9ee5-af7f42e502d9",
       "title": "NotebookLM MCP 編碼修復與 list-notebooks 嘗試",
       "date": "2026-04-22",
+      "lessons_extracted": 2
+    },
+    {
+      "type": "conversation",
+      "id": "9f2855d0-3025-4ba5-930f-90da6b57ff72",
+      "title": "全域技能庫 #開工 #架構 指令更新與冷凍技能網站同步",
+      "date": "2026-06-14",
       "lessons_extracted": 2
     }
   ],
