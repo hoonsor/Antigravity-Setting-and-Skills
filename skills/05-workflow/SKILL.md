@@ -1,9 +1,9 @@
 ---
 name: antigravity-workflow
-description: AntiGravity 開工/收工/新專案初始化/分支管理/合併流程。說「開工」「收工」「初始化專案」「#分支」「#合併」時載入。
+description: AntiGravity 開工/收工/新專案初始化/分支管理/合併/初始化流程。說「開工」「收工」「初始化專案」「#分支」「#合併」「#初始化」時載入。
 ---
 
-# 開工 / 收工 / 分支管理 / 合併 / 新專案初始化 / 架構生成
+# 開工 / 收工 / 分支管理 / 合併 / 初始化 / 新專案初始化 / 架構生成
 
 ## #開工
 1. 檢查當前資料夾：
@@ -32,7 +32,15 @@ description: AntiGravity 開工/收工/新專案初始化/分支管理/合併流
 4. 檢查 git status + diff
 5. 只 stage 本次相關檔案（不用 `git add .`）
 6. 確認後 commit + push
-7. 回報同步結果
+7. **網站專案主分支自動 Vercel 部署 (Vercel Deploy on main)**：
+   - **條件檢查**：
+     - 檢查當前是否為網站/網頁專案（含有 `package.json`、`index.html` 等特徵）。
+     - 檢查當前所在的 Git 工作分支是否為 **`main`**（或 `master`）。
+   - **執行動作**：
+     - 若**同時符合**以上兩個條件，在 `git push` 成功後，自動在背景啟動 Vercel 生產部署：`npx vercel --prod --yes --confirm`。
+     - 若**分支不是 main/master**（例如在 `feature/` 平行宇宙分支），**絕對不可執行 Vercel 部署**，以免動到原本穩定的生產環境版本。
+   - **網址提取**：部署成功後，自動從日誌中提取 `Production: https://xxxx.vercel.app` 網址。
+8. 回報 Git 同步結果與 Vercel 部署網址（若有進行部署）。
 
 ## #合併
 當使用者輸入「#合併」指令時，依序執行以下 Git 合併與部署工作流：
@@ -91,6 +99,38 @@ description: AntiGravity 開工/收工/新專案初始化/分支管理/合併流
   3. 執行 Git Worktree 指令，將該分支檢出到使用者指定的「空的專案目錄資料夾」中：
      `git worktree add <空的專案目錄資料夾路徑> <分支名稱>`
   4. 這會將該分支後續的所有開發作業，直接定位到您設定的那個專案目錄資料夾下。
+
+## #初始化
+當使用者輸入「#初始化」指令時，依序執行以下 Git 初始化與遠端倉庫、Vercel 部署工作流：
+
+1. **已存在 Git 檢測 (防呆與中斷)**：
+   - 先檢查當前專案資料夾是否已包含 Git 設定（例如包含 `.git` 目錄或 `git status` 可正常運行）。
+   - **若已存在 Git**：直接在對話中告知使用者：「*這個資料夾目前已經有相關的 Git 設定了，不需要再次初始化。*」並**停止執行後續所有動作**。
+
+2. **確認倉庫名稱**：
+   - 若不存在 Git，檢查使用者輸入中是否已提供「倉庫名稱」。
+   - **若未提供**：暫停執行，主動詢問使用者：「*請提供您想在 GitHub 上建立的倉庫名稱。*」待使用者回答並確認意圖後，再繼續。
+
+3. **在 GitHub 上建立遠端倉庫**：
+   - 調用 GitHub MCP 伺服器的 `create_repository` 工具，在登入帳號 `hoonsor` 下建立一個名為 `<倉庫名稱>` 的新倉庫。
+   - 獲取新倉庫的遠端 URL（例如 `https://github.com/hoonsor/<倉庫名稱>.git`）。
+
+4. **本地 Git 初始化與首次推送**：
+   - 在當前專案目錄中，依序執行：
+     - `git init`
+     - `git branch -M main` (設定預設主分支為 main)
+     - `git remote add origin https://github.com/hoonsor/<倉庫名稱>.git`
+     - `git add -A`
+     - `git commit -m "chore: initial commit via #初始化"`
+     - `git push -u origin main` (推送到遠端倉庫並建立追蹤)
+
+5. **網頁與網站專案偵測與 Vercel 部署**：
+   - 檢查當前專案是否為網站或網頁專案：
+     - 是否包含 `package.json`（Next.js/React/Vue）、`index.html`（純網頁）、`next.config.js`、`vite.config.ts` 等特徵。
+   - **若是網站專案**：
+     - 自動在背景執行 Vercel 部署指令：`npx vercel --prod --yes --confirm`（此指令會直接將專案部署至 Vercel 雲端）。
+     - 執行 `npx vercel git connect` 或相關 CLI 指令將此 Vercel 專案與剛才建立的 GitHub 倉庫完成連結綁定。
+     - **提取部署網址**：在 Vercel 部署的終端機輸出中，提取 `Production: https://xxxx.vercel.app` 網址，並將此網址回覆給使用者。
 
 ## 新專案初始化
 先問：名稱、用途、資料夾、是否 GitHub repo、公開/私有、是否部署。
