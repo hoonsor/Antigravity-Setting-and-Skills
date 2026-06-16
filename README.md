@@ -1,4 +1,4 @@
-# Antigravity Settings and Skills (v1.4.0)
+# Antigravity Settings and Skills (v1.5.0)
 
 > **Google Antigravity AI 代理的全域自訂設定與技能工作流備份倉庫**
 
@@ -45,6 +45,9 @@ C:\Users\<username>\.gemini\config\ (本倉庫根目錄)
  │    ├── 00-install-all/         # 一次安裝全部懶人包技能
  │    ├── 01-notebooklm/          # NotebookLM MCP 連接技能
  │    ├── 02-github/              # GitHub CLI 連接與設定技能
+ │    ├── hoonsor-preferences/    # 使用者個人偏好與創作風格技能
+ │    │    ├── SKILL.md           # 技能定義與觸發指引
+ │    │    └── PREFERENCES.md     # 詳細的個人喜好、代碼與 UI/UX 偏好設定
  │    ├── hoonsor-sync-global-skills/ # 本同步模組的核心技能與腳本
  │    │    ├── SKILL.md           # 技能觸發指引（引導 AI 跑 sync.ps1）
  │    │    └── sync.ps1           # 自動遮蔽、備份與 Git 推送的 PowerShell 腳本
