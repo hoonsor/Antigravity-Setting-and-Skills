@@ -12,22 +12,17 @@
                                               }
                                   },
                        "github-mcp-server":  {
-                                                 "$typeName":  "exa.cascade_plugins_pb.CascadePluginCommandTemplate",
-                                                 "command":  "docker",
+                                                 "command":  "npx.cmd",
                                                  "args":  [
-                                                              "run",
-                                                              "-i",
-                                                              "--rm",
-                                                              "-e",
-                                                              "GITHUB_PERSONAL_ACCESS_TOKEN",
-                                                              "ghcr.io/github/github-mcp-server"
+                                                              "-y",
+                                                              "@modelcontextprotocol/server-github"
                                                           ],
                                                  "env":  {
                                                              "GITHUB_PERSONAL_ACCESS_TOKEN":  "YOUR_GITHUB_PAT_HERE"
                                                          }
                                              },
                        "notebooklm":  {
-                                          "command":  "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\notebooklm-mcp.exe",
+                                          "command":  "notebooklm-mcp",
                                           "args":  [
 
                                                    ],
