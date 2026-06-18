@@ -1,11 +1,11 @@
-# C:\Users\hoonsor\.gemini\config\skills\hoonsor-sync-global-skills\sync.ps1
+# $env:USERPROFILE\.gemini\config\skills\hoonsor-sync-global-skills\sync.ps1
 # This script is used to sync Antigravity settings and skills repository.
 
 $ErrorActionPreference = "Stop"
 
 # 1. Define paths
-$ConfigDir = "C:\Users\hoonsor\.gemini\config"
-$AntigravityDir = "C:\Users\hoonsor\.gemini\antigravity"
+$ConfigDir = "$env:USERPROFILE\.gemini\config"
+$AntigravityDir = "$env:USERPROFILE\.gemini\antigravity"
 $SkillsDir = "$ConfigDir\skills"
 $BackupMetaDir = "$ConfigDir\_meta_backups"
 $McpConfigFile = "$ConfigDir\mcp_config.json"
