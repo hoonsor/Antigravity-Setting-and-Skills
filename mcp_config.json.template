@@ -1,7 +1,7 @@
 ﻿{
     "mcpServers":  {
                        "gdrive":  {
-                                      "command":  "npx.cmd",
+                                      "command":  "npx",
                                       "args":  [
                                                    "-y",
                                                    "@modelcontextprotocol/server-gdrive"
@@ -12,10 +12,15 @@
                                               }
                                   },
                        "github-mcp-server":  {
-                                                 "command":  "npx.cmd",
+                                                 "$typeName":  "exa.cascade_plugins_pb.CascadePluginCommandTemplate",
+                                                 "command":  "docker",
                                                  "args":  [
-                                                              "-y",
-                                                              "@modelcontextprotocol/server-github"
+                                                              "run",
+                                                              "-i",
+                                                              "--rm",
+                                                              "-e",
+                                                              "GITHUB_PERSONAL_ACCESS_TOKEN",
+                                                              "ghcr.io/github/github-mcp-server"
                                                           ],
                                                  "env":  {
                                                              "GITHUB_PERSONAL_ACCESS_TOKEN":  "YOUR_GITHUB_PAT_HERE"
@@ -25,10 +30,7 @@
                                           "command":  "notebooklm-mcp",
                                           "args":  [
 
-                                                   ],
-                                          "env":  {
-                                                      "PYTHONIOENCODING":  "utf-8"
-                                                  }
+                                                   ]
                                       }
                    }
 }
