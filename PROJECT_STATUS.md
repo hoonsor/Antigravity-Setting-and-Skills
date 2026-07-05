@@ -1,7 +1,7 @@
 # Antigravity-Setting-and-Skills
 
-> **版本號：** `v1.7.0`
-> **最後更新：** 2026-06-18
+> **版本號：** `v1.7.1`
+> **最後更新：** 2026-07-05
 > **GitHub：** [https://github.com/hoonsor/Antigravity-Setting-and-Skills](https://github.com/hoonsor/Antigravity-Setting-and-Skills)
 
 ---
@@ -16,6 +16,7 @@
 
 | 版本 | 日期 | 類型 | 變更說明 |
 |------|------|------|----------|
+| v1.7.1 | 2026-07-05 | feat(pref) | 透過 #喜好 指令自動將「Excel 直覺化與人性化設計規範」錄入 PREFERENCES.md 偏好設定庫 |
 | v1.7.0 | 2026-06-18 | feat | 新增 harness-engineering 全域技能以支援馬鞍工程專案之代理人控制與評估測試 |
 | v1.6.4 | 2026-06-18 | fix | 重構同步腳本、技能引導與還原指南中的硬編碼路徑，改用動態環境變數以支援異機還原無縫運作 |
 | v1.6.3 | 2026-06-16 | feat | 修改 05-workflow 技能中 `#初始化` 流程，支援已存在 Git 設定且曾上傳/未上傳的偵測、Vercel 部署詢問及新遠端庫建立之互動分流 |
@@ -38,6 +39,7 @@
 
 ### 主要任務
 
+- [x] 透過 #喜好 自動將「Excel 直覺化與人性化設計規範」錄入 PREFERENCES.md 偏好庫 (v1.7.1)
 - [x] 新增 harness-engineering 馬鞍工程全域技能，支援常駐代理與測試評估 (v1.7.0)
 - [x] 重構同步腳本、技能引導與還原指南中的硬編碼路徑，改用動態環境變數以支援異機還原無縫運作 (v1.6.4)
 - [x] 透過 `#喜好` 自動擷取並更新 `PREFERENCES.md` 的功能完整度偏好 (v1.6.1)

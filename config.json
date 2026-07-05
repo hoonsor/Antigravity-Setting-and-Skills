@@ -31,7 +31,11 @@
         "mcp(github-mcp-server/*)",
         "mcp(gdrive/*)",
         "read_url(aiprohub.vercel.app)",
-        "read_url(tyai.tyc.edu.tw)"
+        "read_url(tyai.tyc.edu.tw)",
+        "mcp(notebooklm/notebook_list)",
+        "mcp(notebooklm/notebook_create)",
+        "mcp(notebooklm/source_add)",
+        "mcp(notebooklm/source_delete)"
       ]
     },
     "useAiCredits": true
