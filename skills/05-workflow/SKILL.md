@@ -1,6 +1,6 @@
 ---
 name: antigravity-workflow
-description: AntiGravity 開工/收工/新專案初始化/分支管理/合併/初始化流程。說「開工」「收工」「初始化專案」「#分支」「#合併」「#初始化」時載入。
+description: AntiGravity 開工/收工/新專案初始化/分支管理/合併/初始化/全更新流程。說「開工」「收工」「初始化專案」「#分支」「#合併」「#初始化」「#全更新」時載入。
 ---
 
 # 開工 / 收工 / 分支管理 / 合併 / 初始化 / 新專案初始化 / 架構生成
@@ -147,6 +147,15 @@ description: AntiGravity 開工/收工/新專案初始化/分支管理/合併/�
 先問：名稱、用途、資料夾、是否 GitHub repo、公開/私有、是否部署。
 建立：ANTIGRAVITY.md、README.md、.gitignore、Git repo、GitHub repo、專案筆記。
 若已存在 → 盤點後只補缺口，不覆蓋。
+
+## #全更新
+當使用者輸入「#全更新」指令時，一鍵檢查並同步目前電腦登記的所有專案與遠端倉庫內容：
+1. 直接以 `run_command` 執行自動化腳本：
+   `powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\.gemini\config\skills\hoonsor-update-all-projects\update_all_projects.ps1"`
+2. 腳本會自動遍歷 `C:\Users\hoonsor\.gemini\config\projects\*.json` 登記的所有專案：
+   - 僅對已設定遠端 Git 倉庫的專案進行遠端檢查（若無遠端倉庫則自動略過）。
+   - 若遠端有新提交或不一致，自動執行 `git pull --rebase` 智慧合併更新。
+3. 執行完畢後，向使用者呈報檢測與更新狀態彙總表。
 
 ---
 
