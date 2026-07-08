@@ -35,7 +35,8 @@
         "mcp(notebooklm/notebook_list)",
         "mcp(notebooklm/notebook_create)",
         "mcp(notebooklm/source_add)",
-        "mcp(notebooklm/source_delete)"
+        "mcp(notebooklm/source_delete)",
+        "mcp(notebooklm/server_info)"
       ]
     },
     "useAiCredits": true

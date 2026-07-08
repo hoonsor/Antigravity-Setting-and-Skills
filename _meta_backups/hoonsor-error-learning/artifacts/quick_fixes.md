@@ -10,6 +10,8 @@
 | 錯誤關鍵字 | 正確解法 | 教訓 # |
 |-----------|---------|:-----:|
 | `UnicodeEncodeError` / `cp950` | `$env:PYTHONIOENCODING="utf-8"` | #1 |
+| `com_error` / `被呼叫者拒絕` | 執行 PowerShell 強制終止 EXCEL.EXE 背景殭屍進程 | #13 |
+| PDF 提取字串為空 / 掃描檔 | 使用 Python `winsdk` 調用 Windows 內建離線 OCR 引擎 | #14 |
 | `無法辨識` / `is not recognized` | 用完整絕對路徑執行指令 | #4 |
 | `PermissionError` / `AccessDenied` | 以管理員權限執行，或檢查檔案鎖定 | — |
 | `cp65001` / `chcp` | 終端設定 `chcp 65001` 或用 `$env:PYTHONIOENCODING` | #1 |
@@ -52,6 +54,12 @@
 | `冷凍技能數量顯示 0 / 掃描跳過` | 檢查目錄深度是否為多層級（如 `_Skill_Vault`），改用兩層深度遍歷 | #8 |
 | `同步資料後網頁無頁籤或無新欄位` | 檢查前端 React 組件與 Hook 是否已同步編寫對應的渲染與資料讀取邏輯 | #9 |
 | `dotenv/config` / `worktree` | 全新 worktree 目錄下需先執行 `npm install` (或使用鏡像源) 以還原依賴套件 | #10 |
+
+## Excel VBA / 巨集
+
+| 錯誤關鍵字 | 正確解法 | 教訓 # |
+|-----------|---------|:-----:|
+| `AutoFilter` 方法失敗 `1004` | 確保篩選顏色常數與單元格著色 RGB 值精確一致，對齊全域變數 | #15 |
 
 ## React / 前端
 

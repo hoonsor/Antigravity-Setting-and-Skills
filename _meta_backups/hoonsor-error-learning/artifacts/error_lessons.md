@@ -4,11 +4,14 @@
 > **規則**: 只追加不刪除。每次呼叫 `hoonsor-error-learning` 技能後更新。
 
 ---
-
 ## 📑 教訓索引
 
 | # | 標題 | 分類 | 等級 | 浪費模式 | 預估浪費 | 日期 |
-|---|------|------|------|---------|---------|------|
+|
+| 13 | Excel COM 背景進程卡死與檔案鎖定 | 環境 | 🔴 | TW-01, TW-04 | ~6,000 | 2026-07-08 |
+| 14 | 掃描型/圖片型 PDF 文字提取失效 | 邏輯 | 🔴 | TW-02 | ~9,000 | 2026-07-08 |
+| 15 | Excel VBA AutoFilter 顏色篩選強匹配限制 (Error 1004) | 邏輯 | 🟡 | TW-04 | ~3,000 | 2026-07-08 |
+---|------|------|------|---------|---------|------|
 | 1 | Windows CP950 編碼崩潰 | 環境 | 🔴 | TW-04 | ~6,000 | 2026-04-22 |
 | 2 | Angular SPA Selector 地獄 | 前端 | 🔴 | TW-07, TW-02 | ~30,000 | 2026-04-22 |
 | 3 | Python venv 依賴不完整 | 依賴 | 🟡 | TW-06 | ~4,000 | 2026-04-22 |
@@ -459,3 +462,141 @@ React 的 `suppressHydrationWarning` 屬性**僅會作用在單層標籤上**（
 ### 📎 關聯
 - 對話 ID: `c65ea7c7-c473-453c-967c-61322cd294dd`
 - 日期: 2026-06-14
+---
+
+## 📌 教訓 #13: Excel COM 背景進程卡死與檔案鎖定
+
+**錯誤分類**: 環境
+**嚴重等級**: 🔴 高頻
+**Token 浪費模式**: TW-01（盲目重試）, TW-04（環境假設錯誤）
+**預估浪費 Tokens**: ~6,000
+
+### 症狀
+```
+pywintypes.com_error: (-2147023170, '呼叫被被呼叫者拒絕。', None, None)
+```
+或在操作 Excel 檔案時遇到 `PermissionError: [Errno 13] Permission denied`。
+
+### 根因分析
+1. Excel 活頁簿被另一個隱藏的背景 Excel 實例開啟並鎖定。
+2. 在背景自動化執行 `excel.Run` 時，VBA 程式碼內部彈出了 Modal 視窗（例如 `MsgBox`），導致背景 headless Excel 被阻塞，引發 COM RPC 呼叫超時拒絕。
+3. Python 腳本在異常發生後，未能在 `finally` 區塊中成功關閉 Excel COM 物件，導致背景殭屍進程殘留。
+
+### ❌ 無效嘗試（避免重蹈覆轍）
+1. 不終止背景進程直接重試執行腳本 → 持續拋出 PermissionError 與 COM 拒絕。
+2. 僅調用 `wb.Close()` 與 `excel.Quit()` → 若 COM 物件已處於阻塞狀態，這些調用會失敗，無法釋放檔案鎖。
+
+### ✅ 正確解法
+**防護機制**：在 Python COM 腳本的 `finally` 區塊中，加入強制清理鏈，調用 Windows PowerShell 指令強制關閉殘留的 `EXCEL.EXE` 進程：
+```python
+import subprocess
+try:
+    wb.Close(False)
+except Exception:
+    pass
+try:
+    excel.Quit()
+except Exception:
+    pass
+# 強制清理所有殘留進程
+subprocess.run(["powershell", "-Command", "Get-Process EXCEL -ErrorAction SilentlyContinue | Stop-Process -Force"], capture_output=True)
+```
+
+### 🛡️ 預防措施
+- 任何調用 win32com 操作 Excel 的 Python 腳本，**必須在 finally 區塊中加上 PowerShell 強制 kill 進程的防護碼**。
+- 自動化測試或背景執行巨集時，VBA 代碼內應避免使用 `MsgBox`，或暫時關閉警告訊息 `Application.DisplayAlerts = False`。
+
+### 📎 關聯
+- 對話 ID: cbfbfb20-dd4f-4230-a15b-90b4105a9d27
+- 日期: 2026-07-08
+
+---
+
+## 📌 教訓 #14: 掃描型/圖片型 PDF 文字提取失效
+
+**錯誤分類**: 邏輯 / 依賴
+**嚴重等級**: 🔴 高頻
+**Token 浪費模式**: TW-02（方向錯誤）
+**預估浪費 Tokens**: ~9,000
+
+### 症狀
+使用 `pdfplumber` 或 `fitz` (PyMuPDF) 讀取 PDF 檔案提取文字時，回傳空字串 `""`，即使肉眼可見文件內有文字。
+
+### 根因分析
+PDF 文件為「掃描型/圖片型 PDF」，其內部不包含任何數位文字編碼字元，只有點陣圖像。文字提取程式只對數位字元有效，無法對圖片執行文字辨識。
+
+### ❌ 無效嘗試（避免重蹈覆轍）
+1. 重複呼叫 `page.extract_text()` 並調整參數 → 結果依然為空。
+2. 嘗試調用雲端 OCR 工具（如 NotebookLM MCP `source_add` / `notebook_query`） → 被使用者拒絕使用雲端，偏向本地離線隱私處理。
+3. 嘗試在本機下載 Tesseract OCR → 需要使用者在本機手動安裝 `.exe` 軟體，造成系統干擾與環境依賴繁雜。
+
+### ✅ 正確解法
+使用 **Windows 10/11 內建的離線微軟官方 OCR 引擎**！在 Python 中安裝 `winsdk` 套件以直接存取 Windows Runtime API，執行極速的本機離線 OCR：
+```python
+import asyncio
+from winsdk.windows.storage import StorageFile
+from winsdk.windows.graphics.imaging import BitmapDecoder
+from winsdk.windows.media.ocr import OcrEngine
+from winsdk.windows.globalization import Language
+
+async def ocr_image(png_path):
+    file = await StorageFile.get_file_from_path_async(png_path)
+    stream = await file.open_read_async()
+    decoder = await BitmapDecoder.create_async(stream)
+    software_bitmap = await decoder.get_software_bitmap_async()
+    
+    engine = OcrEngine.try_create_from_language(Language("zh-Hant-TW"))
+    result = await engine.recognize_async(software_bitmap)
+    return result.text
+```
+搭配 `pypdfium2` 將 PDF 頁面渲染成 PNG 圖片，再將圖片丟入上述 OCR 函數進行辨識。
+
+### 🛡️ 預防措施
+- 處理 PDF 檔案時，應先偵測提取結果是否為空。若文字為空，自動切換至 `winsdk` 本機離線 OCR 辨識流程。
+- 在 Windows 系統上，優先使用系統內建的微軟 OCR，避免安裝額外龐大的外部 C++ 軟體（如 Tesseract）或調用外部雲端 API。
+
+### 📎 關聯
+- 對話 ID: cbfbfb20-dd4f-4230-a15b-90b4105a9d27
+- 日期: 2026-07-08
+
+---
+
+## 📌 教訓 #15: Excel VBA AutoFilter 顏色篩選強匹配限制 (Error 1004)
+
+**錯誤分類**: 邏輯
+**嚴重等級**: 🟡 中等
+**Token 浪費模式**: TW-04（環境假設錯誤）
+**預估浪費 Tokens**: ~3,000
+
+### 症狀
+執行 VBA AutoFilter 顏色篩選時拋出錯誤：
+```
+執行階段錯誤 '1004': 類別 Range 的 AutoFilter 方法失敗
+```
+
+### 根因分析
+Excel 的 `AutoFilter` 在執行背景色篩選（`Operator:=xlFilterCellColor`）時具備「強匹配與強依賴性」。如果篩選區域（Range）內**沒有任何儲存格**具備 `Criteria1` 所指定的精確 RGB 色碼值，或者該指定 RGB 值與儲存格實際著色值有些微偏差（如 `RGB(253, 233, 230)` 匹配 `16765386`），Excel 會直接中斷並拋出 1004 錯誤。
+
+### ❌ 無效嘗試
+1. 在 Criteria1 中寫死近似的 RGB 數值 → 顏色不精確相符即會崩潰。
+2. 假設篩選沒有符合的顏色時會自動保留空列表而不報錯 → 實際上直接崩潰。
+
+### ✅ 正確解法
+將著色與篩選的顏色定義為**同一個全域常數**，確保兩者精確對齊。
+```vba
+Public Const CLR_LEAVE_BG As Long = 16765386 ' RGB(250, 191, 143)
+
+' 著色段
+cell.Interior.Color = CLR_LEAVE_BG
+
+' 篩選段
+rng.AutoFilter Field:=colIdx, Criteria1:=CLR_LEAVE_BG, Operator:=xlFilterCellColor
+```
+
+### 🛡️ 預防措施
+- 任何涉及背景色篩選的 VBA 設計，必須將顏色值宣告為唯一的常數，禁止在程式碼中重複出現魔法數字（Magic Numbers）。
+- 在執行 AutoFilter 前，宜加入 On Error 捕捉保護，或先確認該列中確實有儲存格上色。
+
+### 📎 關聯
+- 對話 ID: cbfbfb20-dd4f-4230-a15b-90b4105a9d27
+- 日期: 2026-07-08
