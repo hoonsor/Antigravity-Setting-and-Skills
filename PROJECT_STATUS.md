@@ -1,7 +1,7 @@
 # Antigravity-Setting-and-Skills
 
-> **版本號：** `v1.7.1`
-> **最後更新：** 2026-07-05
+> **版本號：** `v1.7.2`
+> **最後更新：** 2026-07-08
 > **GitHub：** [https://github.com/hoonsor/Antigravity-Setting-and-Skills](https://github.com/hoonsor/Antigravity-Setting-and-Skills)
 
 ---
@@ -16,6 +16,7 @@
 
 | 版本 | 日期 | 類型 | 變更說明 |
 |------|------|------|----------|
+| v1.7.2 | 2026-07-08 | feat(pref) | 透過 #喜好 指令自動分析本次對話，將「參考 obsidian-md-notes-viewer 實作全螢幕互動檢視器（支援滾輪平滑縮放與左鍵自由拖曳）」之大圖與流程圖設計喜好登錄至 PREFERENCES.md |
 | v1.7.1 | 2026-07-05 | feat(pref) | 透過 #喜好 指令自動將「Excel 直覺化與人性化設計規範」錄入 PREFERENCES.md 偏好設定庫 |
 | v1.7.0 | 2026-06-18 | feat | 新增 harness-engineering 全域技能以支援馬鞍工程專案之代理人控制與評估測試 |
 | v1.6.4 | 2026-06-18 | fix | 重構同步腳本、技能引導與還原指南中的硬編碼路徑，改用動態環境變數以支援異機還原無縫運作 |
