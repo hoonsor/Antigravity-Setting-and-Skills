@@ -2,9 +2,9 @@
   "title": "hoonsor-error-learning 錯誤學習知識庫",
   "summary": "從歷次對話中萃取的錯誤教訓、無效嘗試模式、正確解法，用於避免重複犯錯和節省 tokens。每次呼叫 hoonsor-error-learning 技能後自動更新。",
   "created_at": "2026-04-22T21:14:00+08:00",
-  "updated_at": "2026-07-08T17:05:33.205807",
-  "total_lessons": 15,
-  "total_estimated_tokens_saved": 0,
+  "updated_at": "2026-07-15T17:11:33.962755",
+  "total_lessons": 16,
+  "total_estimated_tokens_saved": 10000,
   "total_estimated_tokens_wasted_recorded": 139000,
   "references": [
     {
@@ -41,6 +41,17 @@
       "title": "系統設定全域規則與工作流完全移除重構與防爆修復",
       "date": "2026-06-14",
       "lessons_extracted": 3
+    },
+    {
+      "title": "Excel VBA 動態暫存建置管線與 Class Module 重構",
+      "conversation_id": "32c05ddd-8e67-4b6f-a42c-cfad45eb41ed",
+      "date": "2026-07-15",
+      "lessons": [
+        13,
+        14,
+        15,
+        16
+      ]
     }
   ],
   "tags": [
