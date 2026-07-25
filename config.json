@@ -1,5 +1,10 @@
 {
   "userSettings": {
+    "customThemeSeedsDark": {
+      "background": "#24273A",
+      "foregroundOverride": "#CAD3F5",
+      "primary": "#C6A0F6"
+    },
     "globalPermissionGrants": {
       "allow": [
         "read_url(raw.githubusercontent.com)",
@@ -39,6 +44,7 @@
         "mcp(notebooklm/server_info)"
       ]
     },
-    "useAiCredits": true
+    "themeMode": "THEME_MODE_DARK",
+    "useAiCredits": false
   }
 }
