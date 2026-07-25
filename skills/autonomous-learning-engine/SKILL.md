@@ -41,3 +41,9 @@ description: æä¾›åœ¨ç¨ç«‹ä¸»æ©Ÿ (å¦‚ N100) ä¸Šéƒ¨ç½²èˆ‡ç¶­è­· Hermes Agent è‡
 
 > [!CAUTION]
 > æ°¸é ä¸è¦åœ¨æ²’æœ‰å¯¦ä½œ Auto-Throttle (è‡ªå‹•ç¯€æµ) çš„æƒ…æ³ä¸‹è¨­å®šé«˜é »å¿ƒè·³ï¼Œé€™å°‡å°è‡´æ¯€æ»…æ€§çš„å¸³å–®æˆ–é¡åº¦æ¯ç«­ã€‚
+
+## ?? ¬[ºcºt¶i¡GVercel Serverless Gist Bridge »P Excalidraw UI
+1. **¸ê®Æ²æ¹_ (Decoupled Data)**¡G±N N100 µÑ¨úªº JSON ³z¹L GitHub Repo (©Î Gist) µo¥¬¬° Public Raw ºô§}¡AÅı«eºİµL¦øªA¾¹§ì¨ú¡C
+2. **UI ¬ü¾Ç (Excalidraw Style)**¡G¨Ï¥Î ECharts (©Î¯Â CSS) ·f°t Virgil ¦r«¬¡B¤âÃ¸Ãä®Ø (border-radius: 255px 15px 225px 15px/15px 225px 15px 255px) ¼ÒÀÀ¶î¾~­·®æ¡A¨Ã¤ä´©²L/²`¦â¼Ò¦¡¡C
+3. **¦h»y¨¥¸`ÂI**¡GPrompt ³W©w LLM ¿é¥X¡y¤¤¤å (English)¡z®æ¦¡¡A¦A¥Ñ«eºİ°ÊºA´À´«±Æª©¡C
+4. **·¥­­¶WÀW¼Ò¦¡**¡G¸T¤î Hermes ¨Ï¥Î clarify ¤u¨ã¡A±j¨îÀH¾÷¬£ÃD¨Ã¦Û¥D Debug ¨ì©³¡C¨Ã«Ø¥ßÂù¦V¦^õX¾÷¨î (review_queue.md & architect_feedback.md)¡C
