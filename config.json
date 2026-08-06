@@ -41,7 +41,8 @@
         "mcp(notebooklm/notebook_create)",
         "mcp(notebooklm/source_add)",
         "mcp(notebooklm/source_delete)",
-        "mcp(notebooklm/server_info)"
+        "mcp(notebooklm/server_info)",
+        "read_url(raphael-mindmap-data.vercel.app)"
       ]
     },
     "themeMode": "THEME_MODE_DARK",

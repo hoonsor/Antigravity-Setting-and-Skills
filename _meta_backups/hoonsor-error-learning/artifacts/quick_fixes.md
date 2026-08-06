@@ -17,6 +17,7 @@
 | `cp65001` / `chcp` | 終端設定 `chcp 65001` 或用 `$env:PYTHONIOENCODING` | #1 |
 | `&&` 語法無效 | 使用 `;` 取代 `&&` 串接 PowerShell 命令 | #5 |
 | `grep` / `executable file not found` | 改用 `grep_search` API 工具 | #5 |
+| `bash -c` / 字串反引號錯誤 | 避免在 inline 字串中寫 ` ``` `，改用 bash 腳本檔，或使用 `\\\"\\\`\\\`\\\`\\\"` 極端跳脫 | #18 |
 
 ## Python 依賴
 
@@ -48,6 +49,8 @@
 
 | 錯誤關鍵字 | 正確解法 | 教訓 # |
 |-----------|---------|:-----:|
+| Project names can be up to | 將專案資料夾改為全小寫 | #16 |
+| UnicodeDecodeError | open(..., errors='replace') | #17 |
 | `PrismaClient` / 連線耗盡 | 使用 singleton 模式（參考 ai-pro-hub 專案） | — |
 | `Internal Server Error` (Vercel) | 檢查 API route 是否有未處理的 async 錯誤 | — |
 | `DEPLOYMENT_FAILED` | 查看 Vercel Function logs 而非 Build logs | — |
@@ -67,6 +70,7 @@
 |-----------|---------|:-----:|
 | `duplicate key` | 將 React 迴圈中的 key 屬性改為唯一的欄位值（如 `kw.trigger`） | #11 |
 | `hydration mismatch` / `bis_register` | 同步在 `<html>` 與 `<body>` 上加上 `suppressHydrationWarning` 屬性 | #12 |
+| ECharts / Tree / 文字重疊 | 必須針對 Container 設置動態虛擬高度 `virtualHeight` 並在 resize 加上 debounce | #19 |
 
 ---
 
