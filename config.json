@@ -1,4 +1,27 @@
 {
+  "plugins": {
+    "android-cli-plugin": {
+      "enabled": true
+    },
+    "chrome-devtools-plugin": {
+      "enabled": true
+    },
+    "firebase": {
+      "enabled": true
+    },
+    "flutter": {
+      "enabled": true
+    },
+    "google-antigravity-sdk": {
+      "enabled": true
+    },
+    "modern-web-guidance-plugin": {
+      "enabled": true
+    },
+    "science": {
+      "enabled": true
+    }
+  },
   "userSettings": {
     "customThemeSeedsDark": {
       "background": "#24273A",
@@ -42,10 +65,15 @@
         "mcp(notebooklm/source_add)",
         "mcp(notebooklm/source_delete)",
         "mcp(notebooklm/server_info)",
-        "read_url(raphael-mindmap-data.vercel.app)"
+        "read_url(raphael-mindmap-data.vercel.app)",
+        "read_url(laws.mol.gov.tw)",
+        "read_url(edu.law.moe.gov.tw)",
+        "mcp(notebooklm/source_list_drive)",
+        "mcp(canva-mcp/*)"
       ]
     },
     "themeMode": "THEME_MODE_DARK",
-    "useAiCredits": false
+    "useAiCredits": true,
+    "remoteControlHostname": "desktop-b20cd0-polar-mars"
   }
 }
