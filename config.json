@@ -23,11 +23,14 @@
     }
   },
   "userSettings": {
+    "artifactReviewMode": "ARTIFACT_REVIEW_MODE_TURBO",
+    "autoExecutionPolicy": "CASCADE_COMMANDS_AUTO_EXECUTION_EAGER",
     "customThemeSeedsDark": {
       "background": "#24273A",
       "foregroundOverride": "#CAD3F5",
       "primary": "#C6A0F6"
     },
+    "enableTerminalSandbox": false,
     "globalPermissionGrants": {
       "allow": [
         "read_url(raw.githubusercontent.com)",
@@ -72,8 +75,10 @@
         "mcp(canva-mcp/*)"
       ]
     },
+    "nonWorkspaceFileAccessPolicy": "AGENT_SETTING_POLICY_ALLOW",
+    "remoteControlEnabled": true,
+    "remoteControlHostname": "desktop-b20cd0-polar-mars",
     "themeMode": "THEME_MODE_DARK",
-    "useAiCredits": true,
-    "remoteControlHostname": "desktop-b20cd0-polar-mars"
+    "useAiCredits": true
   }
 }
