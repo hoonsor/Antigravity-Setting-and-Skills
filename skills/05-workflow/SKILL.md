@@ -33,15 +33,20 @@ description: AntiGravity 開工/收工/更新/新專案初始化/分支管理/�
 4. 檢查 git status + diff
 5. 只 stage 本次相關檔案（不用 `git add .`）
 6. 確認後 commit + push
-7. **網站專案主分支自動 Vercel 部署 (Vercel Deploy on main)**：
-   - **條件檢查**：
-     - 檢查當前是否為網站/網頁專案（含有 `package.json`、`index.html` 等特徵）。
-     - 檢查當前所在的 Git 工作分支是否為 **`main`**（或 `master`）。
-   - **執行動作**：
-     - 若**同時符合**以上兩個條件，在 `git push` 成功後，自動在背景啟動 Vercel 生產部署：`npx vercel --prod --yes --confirm`。
-     - 若**分支不是 main/master**（例如在 `feature/` 平行宇宙分支），**絕對不可執行 Vercel 部署**，以免動到原本穩定的生產環境版本。
-   - **網址提取**：部署成功後，自動從日誌中提取 `Production: https://xxxx.vercel.app` 網址。
-8. 回報 Git 同步結果與 Vercel 部署網址（若有進行部署）。
+7. **並行 Worktree 自動備份 (Auto-Backup Worktrees)**：
+   - 執行 `git worktree list` 取得同專案下其他獨立的 worktree 路徑。
+   - 針對每一個非當前路徑的 worktree 檢查 `git status`。若有未提交的變更，自動進入該目錄執行快速備份：`git add -A` -> `git commit -m "chore(worktree): auto backup via #更新"` -> `git push origin HEAD`。
+   - **安全保證**：因每個 worktree 皆綁定獨立的 feature 分支，此推送完全平行，**絕對不會干擾或混入 main 主幹**。
+8. **已合併分支與 Worktree 自動清理 (Prune & Cleanup)**：
+   - 執行 `git fetch -p` 清理遠端已刪除的分支追蹤。
+   - **只在當前處於 `main` 且剛完成 `#合併` 後觸發**：使用 `git branch --merged main` 找出已經 100% 成功合併到主線的任務分支（排除 main 與 master）。
+   - 針對這些「已功成身退」的分支：
+     1. 若分支仍掛載於某個 worktree 資料夾，先安全移除資料夾：`git worktree remove <該目錄>`。
+     2. 刪除本地分支：`git branch -d <分支名稱>`。
+     3. 刪除遠端分支：`git push origin --delete <分支名稱>`（若遠端仍存在）。
+9. **網站專案主分支自動 Vercel 部署 (Vercel Deploy on main)**：
+   - 檢查當前是否為網站專案且位於 `main` 分支。若是，背景啟動 Vercel 生產部署：`npx vercel --prod --yes --confirm` 並提取網址。若不是 `main`，絕對不可執行。
+10. 回報所有 Git 同步結果（含 Worktree 備份、清理清單）與 Vercel 部署網址。
 
 ## #合併
 當使用者輸入「#合併」指令時，依序執行以下 Git 合併與部署工作流：

@@ -72,12 +72,13 @@
         "read_url(laws.mol.gov.tw)",
         "read_url(edu.law.moe.gov.tw)",
         "mcp(notebooklm/source_list_drive)",
-        "mcp(canva-mcp/*)"
+        "mcp(canva-mcp/*)",
+        "read_url(github.com)"
       ]
     },
     "nonWorkspaceFileAccessPolicy": "AGENT_SETTING_POLICY_ALLOW",
     "remoteControlEnabled": true,
-    "remoteControlHostname": "desktop-b20cd0-polar-mars",
+    "remoteControlHostname": "desktop-5dm4edt-noble-corona",
     "themeMode": "THEME_MODE_DARK",
     "useAiCredits": true
   }
