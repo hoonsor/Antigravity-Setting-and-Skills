@@ -8,6 +8,7 @@
 - **簡潔原則**：回覆應保持簡潔，並在每次任務結束後提供摘要說明，避免冗長無用的廢話。
 
 ## 💻 2025-2026 全端開發技術棧
+- **API 優先架構 (API-First Design) [新增於 2026-08-31]**：在接受任何應用程式（Web, Desktop, Mobile 等）開發指令時，**必須**主動且優先規劃並實作獨立的後端 API 服務與嚴謹的 API 契約（如 `contract.json` 或 OpenAPI），拒絕將商業邏輯與前端綁死，為未來的多代理人協作與無頭式自動化打好基礎。
 - **前端開發**：
   - **核心**：React 19+、TypeScript。
   - **樣式**：Tailwind CSS (採用 functional components 與 hooks)。
