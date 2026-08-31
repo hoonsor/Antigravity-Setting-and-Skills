@@ -18,6 +18,9 @@
 | `&&` 語法無效 | 使用 `;` 取代 `&&` 串接 PowerShell 命令 | #5 |
 | `grep` / `executable file not found` | 改用 `grep_search` API 工具 | #5 |
 | `bash -c` / 字串反引號錯誤 | 避免在 inline 字串中寫 ` ``` `，改用 bash 腳本檔，或使用 `\\\"\\\`\\\`\\\`\\\"` 極端跳脫 | #18 |
+| `UnexpectedToken ')'` / PowerShell 執行 Bash | 禁止用 `run_command` + SSH 字串內嵌複雜 Bash，改用實體 `.sh` 檔案上傳後執行 | #21 |
+| `The token '&&' is not a valid statement separator` | 在 Windows 終端使用 `;` 取代 `&&` 串接指令 | #22 |
+| `dir /B` / 參數找不到 | 改用 `list_dir` 工具，或使用標準 PowerShell `Get-ChildItem` | #22 |
 
 ## Python 依賴
 
@@ -57,6 +60,7 @@
 | `冷凍技能數量顯示 0 / 掃描跳過` | 檢查目錄深度是否為多層級（如 `_Skill_Vault`），改用兩層深度遍歷 | #8 |
 | `同步資料後網頁無頁籤或無新欄位` | 檢查前端 React 組件與 Hook 是否已同步編寫對應的渲染與資料讀取邏輯 | #9 |
 | `dotenv/config` / `worktree` | 全新 worktree 目錄下需先執行 `npm install` (或使用鏡像源) 以還原依賴套件 | #10 |
+| `invalid_args` / `already exists` (Artifact) | 覆蓋已有 Artifact 時必須加上 `Overwrite: true` | #20 |
 
 ## Excel VBA / 巨集
 
