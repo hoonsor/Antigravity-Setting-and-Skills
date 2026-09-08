@@ -1,6 +1,6 @@
 ---
 name: antigravity-workflow
-description: AntiGravity 開工/收工/更新/新專案初始化/分支管理/合併/初始化/全更新流程。說「開工」「收工」「#更新」「更新」「初始化專案」「#分支」「#合併」「#初始化」「#全更新」時載入。
+description: AntiGravity 開工/收工/更新/新專案初始化/分支管理/合併/初始化/全更新/測試流程。說「開工」「收工」「#更新」「更新」「初始化專案」「#分支」「#合併」「#初始化」「#全更新」「#測試」時載入。
 ---
 
 # 開工 / 收工 / 更新 / 分支管理 / 合併 / 初始化 / 新專案初始化 / 架構生成
@@ -148,6 +148,17 @@ description: AntiGravity 開工/收工/更新/新專案初始化/分支管理/�
      - 自動在背景執行 Vercel 部署指令：`npx vercel --prod --yes --confirm`（此指令會直接將專案部署至 Vercel 雲端）。
      - 執行 `npx vercel git connect` 或相關 CLI 指令將此 Vercel 專案與剛才建立的 GitHub 倉庫完成連結綁定。
      - **提取部署網址**：在 Vercel 部署的終端機輸出中，提取 `Production: https://xxxx.vercel.app` 網址，並將此網址回覆給使用者。
+
+## #測試
+當使用者輸入「#測試」指令時，自動協助在當前專案資料夾中啟動開發伺服器進行測試：
+1. **檢查環境**：
+   - 檢查當前專案內是否包含 `package.json`，且內部設定有 `dev` 或 `start` 指令。
+   - 若為 Python 等其他專案，檢查是否有對應的啟動指令（如 `uvicorn main:app --reload` 或 `python app.py`）。
+2. **自動啟動**：
+   - 呼叫 `run_command` 工具（並設置 `IsDaemon: true` 與 `WaitMsBeforeAsync: 3000`），自動為使用者在背景開啟終端機（PowerShell）並執行啟動指令（例如：`npm run dev`）。不需要使用者自行打開 CMD 或 PowerShell。
+3. **回報**：
+   - 指令順利啟動後，擷取並將本地伺服器測試網址（例如 `http://localhost:3000` 或 `http://localhost:5173`）回報給使用者，告知測試伺服器已自動啟動。
+   - 提醒使用者如果想要停止測試伺服器，隨時告知我即可為您關閉。
 
 ## 新專案初始化
 先問：名稱、用途、資料夾、是否 GitHub repo、公開/私有、是否部署。
