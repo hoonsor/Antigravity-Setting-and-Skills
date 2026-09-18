@@ -73,7 +73,8 @@
         "read_url(edu.law.moe.gov.tw)",
         "mcp(notebooklm/source_list_drive)",
         "mcp(canva-mcp/*)",
-        "read_url(github.com)"
+        "read_url(github.com)",
+        "mcp(notebooklm/source_sync_drive)"
       ]
     },
     "nonWorkspaceFileAccessPolicy": "AGENT_SETTING_POLICY_ALLOW",

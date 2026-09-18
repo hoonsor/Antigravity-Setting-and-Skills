@@ -15,9 +15,6 @@
 | 17 | Python 讀取檔案 Unicode 解碼錯誤 | 環境 | 🟡 | TW-04 | ~2,000 | 2026-07-27 |
 | 18 | Bash字串內嵌反引號跳脫失效 | 環境 | 🔴 | TW-01 | ~6,000 | 2026-07-27 |
 | 19 | ECharts Tree 缺乏動態高度導致重疊 | 前端 | 🔴 | TW-02 | ~15,000 | 2026-07-27 |
-| 20 | ArtifactMetadata 參數誤用導致 Overwrite 失敗 | API | 🟢 | 無 | ~1,000 | 2026-08-09 |
-| 21 | PowerShell 遠端執行多行 Bash 腳本解析失敗 | 環境 | 🔴 | TW-04 | ~3,000 | 2026-08-09 |
-| 22 | PowerShell 命令列指令與運算符不相容 (&&, dir /B) | 環境 | 🟡 | TW-04 | ~2,000 | 2026-08-09 |
 |----|------|------|------|---------|---------|------|
 | 1 | Windows CP950 編碼崩潰 | 環境 | 🔴 | TW-04 | ~6,000 | 2026-04-22 |
 | 2 | Angular SPA Selector 地獄 | 前端 | 🔴 | TW-07, TW-02 | ~30,000 | 2026-04-22 |
@@ -726,127 +723,31 @@ ECharts Tree Layout 在沒有給定具體的圖表高度時，預設會自適應
 - 對話 ID: dbb84cba-4a0b-4f29-a706-76a9d4365286
 - 日期: 2026-07-27
 
----
+## 📌 教訓: VBA 差假查詢忽略「送審中」狀態導致漏抓
 
-## 📌 教訓 #20: ArtifactMetadata 參數誤用導致 Overwrite 失敗
-
-**錯誤分類**: API
-**嚴重等級**: 🟢 偶發
+**錯誤分類**: 邏輯
+**嚴重等級**: 🔴 高頻
 **Token 浪費模式**: 無
-**預估浪費 Tokens**: ~1,000
+**預估浪費 Tokens**: 1000
 
 ### 症狀
-```
-invalid tool call error (invalid_args) ... already exists. Edit the existing artifact instead.
-```
+使用者回報「差假大批查詢工具」在比對特定教職員的公假時，未能成功在「差假資料庫」中將該筆資料標記出來，即使查詢時間區間完全重疊。
 
 ### 根因分析
-呼叫 `write_to_file` 時，帶有 `ArtifactMetadata` 會將檔案視為 Artifact。若該 Artifact 已由先前的會話建立且存在於資料夾中，`write_to_file` 預設的防呆機制會拒絕覆蓋，拋出錯誤。
+經過追蹤 `modQuery.bas` 的演算法，發現在從「差假資料庫」載入資料時，狀態過濾條件僅包含 `"已簽核" Or "審核完成" Or ""`。而該筆紀錄為 **`送審中`**，導致未被載入。
 
-### ❌ 無效嘗試
-無（一次定位）。
-
-### ✅ 正確解法
-若意圖建立並完全覆蓋已存在的 Artifact，必須在工具呼叫中明確指定 `Overwrite: true`；若只需局部更新，應改用 `multi_replace_file_content` 工具。
-
-### 🛡️ 預防措施
-- 更新 Artifact 檔案前，先確認檔案是否已存在，若存在且需整份更新，務必加上 `Overwrite: true`。
-
-### 📎 關聯
-- 對話 ID: dbb84cba-4a0b-4f29-a706-76a9d4365286
-- 日期: 2026-08-09
-
----
-
-## 📌 教訓 #21: PowerShell 遠端執行多行 Bash 腳本解析失敗
-
-**錯誤分類**: 環境
-**嚴重等級**: 🔴 高頻
-**Token 浪費模式**: TW-04（環境假設錯誤）
-**預估浪費 Tokens**: ~3,000
-
-### 症狀
-```
-CategoryInfo: ParserError: (:) [], ParentContainsErrorRecordException: UnexpectedToken ')'
-```
-
-### 根因分析
-在 Windows 系統透過 `run_command` 執行 PowerShell 指令時，若使用 `ssh "cat << 'EOF' ... case \"$1\" in start) ... EOF"` 的方式傳遞複雜 Bash 腳本，PowerShell 會在將字串送交 SSH 之前，自行介入解析字串中的特殊符號（例如 `)`、`&&`）。由於 PowerShell 語法與 Bash 不相容，導致執行崩潰。
-
-### ❌ 無效嘗試
-1. 嘗試直接在 `run_command` 中嵌入手寫的 Bash 腳本，未能考量宿主環境為 PowerShell 的變量與符號解析機制。
+### ❌ 無效嘗試（避免重蹈覆轍）
+無。
 
 ### ✅ 正確解法
-放棄使用單行字串內嵌腳本的作法。改用 `write_to_file` 工具，將完整的 Bash 腳本寫入本地的 `.sh` 暫存檔中，然後透過 `scp` 傳送至遠端，再用 `ssh` 遠端賦予執行權限並執行。
-
-### 🛡️ 預防措施
-- **禁止在 PowerShell 中透過字串內嵌的方式傳遞包含 `case`, `&&`, `)` 等符號的多行 Bash 腳本給 SSH**。一律使用實體檔案傳輸後再執行。
-
-### 📎 關聯
-- 對話 ID: dbb84cba-4a0b-4f29-a706-76a9d4365286
-- 日期: 2026-08-09
-
----
-
-## 📌 教訓 #22: PowerShell 命令列指令與運算符不相容 (&&, dir /B)
-
-**錯誤分類**: 環境
-**嚴重等級**: 🟡 中等
-**Token 浪費模式**: TW-04（環境假設錯誤）
-**預估浪費 Tokens**: ~2,000
-
-### 症狀
-```
-The token '&&' is not a valid statement separator
-Get-ChildItem : A positional parameter cannot be found that accepts argument '/B'
+將 `送審中` 加入允許的狀態名單中：
+```vba
+If strStatus = "已簽核" Or strStatus = "審核完成" Or strStatus = "送審中" Or strStatus = "" Then
 ```
 
-### 根因分析
-在 Windows 的 `run_command` 工具預設使用的是 PowerShell 終端機，而非 cmd 或 Bash：
-1. 舊版 PowerShell 不支援 `&&` 作為邏輯 AND 運算符。
-2. PowerShell 內部會將 `dir` alias 到 `Get-ChildItem`，因此無法接受傳統 DOS 的 `/A:D /B` 等切換參數。
-
-### ❌ 無效嘗試
-1. 在 PowerShell 習慣性地輸入 `git pull && git status`。
-2. 在 PowerShell 習慣性地輸入 `dir /A:D /B | findstr`。
-
-### ✅ 正確解法
-- **多指令串接**：使用分號 `;` 取代 `&&`（例如 `git pull ; git status`）。
-- **目錄與檔案搜尋**：優先使用系統專屬的 `list_dir` 工具。若必須在命令列執行，應使用標準的 PowerShell 語法（例如 `Get-ChildItem -Directory | Where-Object { $_.Name -match "..." }`），而非混用 cmd 指令。
-
 ### 🛡️ 預防措施
-- 在 Windows 執行 `run_command` 時，必須隨時意識到宿主環境為 PowerShell。避免使用 Bash 的邏輯運算符與 cmd 的專有參數。
+處理行政機關表單與請假系統資料時，必須先遍歷一次該欄位存在的所有「狀態」枚舉值（Enumeration），再決定過濾邏輯。
 
 ### 📎 關聯
-- 對話 ID: dbb84cba-4a0b-4f29-a706-76a9d4365286
-- 日期: 2026-08-09
-
----
-
-## 🛑 教訓 #23: HuggingFace 背景下載鎖與 Windows CUDA DLL 載入失敗
-
-**錯誤類型**: 環境
-**嚴重等級**: 🔴 高頻
-**Token 浪費模式**: TW-01 (無效盲試)
-**預估浪費 Tokens**: ~5,000
-
-### 症狀
-1. huggingface_hub 下載時卡在  % 或進度完全不動。
-2. Windows 下使用 GPU 加速 (faster-whisper/ctranslate2) 拋出 RuntimeError: Library cublas64_12.dll is not found or cannot be loaded。
-
-### 根本原因
-1. huggingface_hub 使用 .locks 來防止並行下載。如果在背景啟動了多個下載任務 (或 GUI 崩潰未正確釋放)，會導致前台指令卡死在等待鎖釋放。
-2. CTranslate2 (faster-whisper 後台) 需要 NVIDIA CUDA 12 的動態連結庫。即使透過 pip 安裝了 
-vidia-cublas-cu12，如果在 Windows 下未將該 in 目錄加入 os.environ["PATH"]，底層 C++ 引擎仍然會找不到 DLL 導致崩潰。
-
-### 無效的嘗試
-1. **無效盲試 (TW-01)**：以為網路問題，不斷重啟程式或使用 os.add_dll_directory() 卻忽略了 CTranslate2 實際上是透過 C++ 讀取 PATH 來尋找 DLL。
-
-### 正確解答
-1. **下載卡死**：必須使用 	askkill /IM python.exe /F 清除所有背景佔用的 python 進程，並刪除 ~/.cache/huggingface/hub/.locks 資料夾。在網路不佳區域，建議透過 pip install hf_transfer 開啟 Rust 加速引擎，並使用獨立腳本強制續傳。
-2. **CUDA DLL**：必須遍歷 sys.path 和 site.getsitepackages() 找到 
-vidia\cublas\bin 與 
-vidia\cudnn\bin，並使用 os.environ["PATH"] = cublas_path + os.pathsep + os.environ.get("PATH", "") 在 import faster_whisper 之前強制掛載。
-
-### 預防防護措施
-- 處理 Windows Python 的 GPU 依賴時，除了 os.add_dll_directory()，必須同時修改 os.environ["PATH"] 才能相容跨語言呼叫的 C++ 函式庫。
+- 對話 ID: 32c05ddd-8e67-4b6f-a42c-cfad45eb41ed
+- 日期: 2026-09-11
