@@ -29,6 +29,8 @@ description: >
 | 12 | `#喜好` | hoonsor-preferences | 分析對話中的偏好並記錄至 PREFERENCES.md |
 | 13 | `#筆記` | hoonsor-note-from-chat | 從對話中擷取指定主題，生成 Obsidian 格式筆記 |
 | 14 | `#指令` | hoonsor-command-index | 顯示本清單（你正在看的這個） |
+| 15 | `#測試` | antigravity-workflow | 自動在背景啟動當前專案的開發伺服器 (如 npm run dev) |
+| 16 | `#尋找新技能` | hoonsor-skill-hunter | 上網發掘社群熱門 Antigravity 技能並自動下載安裝 |
 
 ---
 
