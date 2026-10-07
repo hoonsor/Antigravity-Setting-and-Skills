@@ -29,7 +29,8 @@
                        "notebooklm":  {
                                           "command":  "notebooklm-mcp",
                                           "args":  [
-
+                                                       "--transport",
+                                                       "stdio"
                                                    ]
                                       }
                    }

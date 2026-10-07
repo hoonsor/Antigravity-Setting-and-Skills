@@ -1,7 +1,12 @@
 {
   "plugins": {
     "android-cli-plugin": {
-      "enabled": true
+      "enabled": true,
+      "installedFrom": {
+        "id": "antigravity-plugins-official/plugin/android-cli-plugin",
+        "marketplace": "antigravity-plugins-official",
+        "version": "1.0.15985488"
+      }
     },
     "chrome-devtools-plugin": {
       "enabled": true
@@ -19,7 +24,12 @@
       "enabled": true
     },
     "science": {
-      "enabled": true
+      "enabled": true,
+      "installedFrom": {
+        "id": "antigravity-plugins-official/plugin/science",
+        "marketplace": "antigravity-plugins-official",
+        "version": "1.2.4"
+      }
     }
   },
   "userSettings": {
