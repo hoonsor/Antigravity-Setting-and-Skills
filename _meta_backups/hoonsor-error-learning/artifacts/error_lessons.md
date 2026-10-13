@@ -15,6 +15,9 @@
 | 17 | Python 讀取檔案 Unicode 解碼錯誤 | 環境 | 🟡 | TW-04 | ~2,000 | 2026-07-27 |
 | 18 | Bash字串內嵌反引號跳脫失效 | 環境 | 🔴 | TW-01 | ~6,000 | 2026-07-27 |
 | 19 | ECharts Tree 缺乏動態高度導致重疊 | 前端 | 🔴 | TW-02 | ~15,000 | 2026-07-27 |
+| 20 | ArtifactMetadata 參數誤用導致 Overwrite 失敗 | API | 🟢 | 無 | ~1,000 | 2026-08-09 |
+| 21 | PowerShell 遠端執行多行 Bash 腳本解析失敗 | 環境 | 🔴 | TW-04 | ~3,000 | 2026-08-09 |
+| 22 | PowerShell 命令列指令與運算符不相容 (&&, dir /B) | 環境 | 🟡 | TW-04 | ~2,000 | 2026-08-09 |
 |----|------|------|------|---------|---------|------|
 | 1 | Windows CP950 編碼崩潰 | 環境 | 🔴 | TW-04 | ~6,000 | 2026-04-22 |
 | 2 | Angular SPA Selector 地獄 | 前端 | 🔴 | TW-07, TW-02 | ~30,000 | 2026-04-22 |
@@ -723,6 +726,648 @@ ECharts Tree Layout 在沒有給定具體的圖表高度時，預設會自適應
 - 對話 ID: dbb84cba-4a0b-4f29-a706-76a9d4365286
 - 日期: 2026-07-27
 
+---
+
+## 📌 教訓 #20: ArtifactMetadata 參數誤用導致 Overwrite 失敗
+
+**錯誤分類**: API
+**嚴重等級**: 🟢 偶發
+**Token 浪費模式**: 無
+**預估浪費 Tokens**: ~1,000
+
+### 症狀
+```
+invalid tool call error (invalid_args) ... already exists. Edit the existing artifact instead.
+```
+
+### 根因分析
+呼叫 `write_to_file` 時，帶有 `ArtifactMetadata` 會將檔案視為 Artifact。若該 Artifact 已由先前的會話建立且存在於資料夾中，`write_to_file` 預設的防呆機制會拒絕覆蓋，拋出錯誤。
+
+### ❌ 無效嘗試
+無（一次定位）。
+
+### ✅ 正確解法
+若意圖建立並完全覆蓋已存在的 Artifact，必須在工具呼叫中明確指定 `Overwrite: true`；若只需局部更新，應改用 `multi_replace_file_content` 工具。
+
+### 🛡️ 預防措施
+- 更新 Artifact 檔案前，先確認檔案是否已存在，若存在且需整份更新，務必加上 `Overwrite: true`。
+
+### 📎 關聯
+- 對話 ID: dbb84cba-4a0b-4f29-a706-76a9d4365286
+- 日期: 2026-08-09
+
+---
+
+## 📌 教訓 #21: PowerShell 遠端執行多行 Bash 腳本解析失敗
+
+**錯誤分類**: 環境
+**嚴重等級**: 🔴 高頻
+**Token 浪費模式**: TW-04（環境假設錯誤）
+**預估浪費 Tokens**: ~3,000
+
+### 症狀
+```
+CategoryInfo: ParserError: (:) [], ParentContainsErrorRecordException: UnexpectedToken ')'
+```
+
+### 根因分析
+在 Windows 系統透過 `run_command` 執行 PowerShell 指令時，若使用 `ssh "cat << 'EOF' ... case \"$1\" in start) ... EOF"` 的方式傳遞複雜 Bash 腳本，PowerShell 會在將字串送交 SSH 之前，自行介入解析字串中的特殊符號（例如 `)`、`&&`）。由於 PowerShell 語法與 Bash 不相容，導致執行崩潰。
+
+### ❌ 無效嘗試
+1. 嘗試直接在 `run_command` 中嵌入手寫的 Bash 腳本，未能考量宿主環境為 PowerShell 的變量與符號解析機制。
+
+### ✅ 正確解法
+放棄使用單行字串內嵌腳本的作法。改用 `write_to_file` 工具，將完整的 Bash 腳本寫入本地的 `.sh` 暫存檔中，然後透過 `scp` 傳送至遠端，再用 `ssh` 遠端賦予執行權限並執行。
+
+### 🛡️ 預防措施
+- **禁止在 PowerShell 中透過字串內嵌的方式傳遞包含 `case`, `&&`, `)` 等符號的多行 Bash 腳本給 SSH**。一律使用實體檔案傳輸後再執行。
+
+### 📎 關聯
+- 對話 ID: dbb84cba-4a0b-4f29-a706-76a9d4365286
+- 日期: 2026-08-09
+
+---
+
+## 📌 教訓 #22: PowerShell 命令列指令與運算符不相容 (&&, dir /B)
+
+**錯誤分類**: 環境
+**嚴重等級**: 🟡 中等
+**Token 浪費模式**: TW-04（環境假設錯誤）
+**預估浪費 Tokens**: ~2,000
+
+### 症狀
+```
+The token '&&' is not a valid statement separator
+Get-ChildItem : A positional parameter cannot be found that accepts argument '/B'
+```
+
+### 根因分析
+在 Windows 的 `run_command` 工具預設使用的是 PowerShell 終端機，而非 cmd 或 Bash：
+1. 舊版 PowerShell 不支援 `&&` 作為邏輯 AND 運算符。
+2. PowerShell 內部會將 `dir` alias 到 `Get-ChildItem`，因此無法接受傳統 DOS 的 `/A:D /B` 等切換參數。
+
+### ❌ 無效嘗試
+1. 在 PowerShell 習慣性地輸入 `git pull && git status`。
+2. 在 PowerShell 習慣性地輸入 `dir /A:D /B | findstr`。
+
+### ✅ 正確解法
+- **多指令串接**：使用分號 `;` 取代 `&&`（例如 `git pull ; git status`）。
+- **目錄與檔案搜尋**：優先使用系統專屬的 `list_dir` 工具。若必須在命令列執行，應使用標準的 PowerShell 語法（例如 `Get-ChildItem -Directory | Where-Object { $_.Name -match "..." }`），而非混用 cmd 指令。
+
+### 🛡️ 預防措施
+- 在 Windows 執行 `run_command` 時，必須隨時意識到宿主環境為 PowerShell。避免使用 Bash 的邏輯運算符與 cmd 的專有參數。
+
+### 📎 關聯
+- 對話 ID: dbb84cba-4a0b-4f29-a706-76a9d4365286
+- 日期: 2026-08-09
+
+---
+
+## 🛑 教訓 #23: HuggingFace 背景下載鎖與 Windows CUDA DLL 載入失敗
+
+**錯誤類型**: 環境
+**嚴重等級**: 🔴 高頻
+**Token 浪費模式**: TW-01 (無效盲試)
+**預估浪費 Tokens**: ~5,000
+
+### 症狀
+1. huggingface_hub 下載時卡在  % 或進度完全不動。
+2. Windows 下使用 GPU 加速 (faster-whisper/ctranslate2) 拋出 RuntimeError: Library cublas64_12.dll is not found or cannot be loaded。
+
+### 根本原因
+1. huggingface_hub 使用 .locks 來防止並行下載。如果在背景啟動了多個下載任務 (或 GUI 崩潰未正確釋放)，會導致前台指令卡死在等待鎖釋放。
+2. CTranslate2 (faster-whisper 後台) 需要 NVIDIA CUDA 12 的動態連結庫。即使透過 pip 安裝了 
+vidia-cublas-cu12，如果在 Windows 下未將該 in 目錄加入 os.environ["PATH"]，底層 C++ 引擎仍然會找不到 DLL 導致崩潰。
+
+### 無效的嘗試
+1. **無效盲試 (TW-01)**：以為網路問題，不斷重啟程式或使用 os.add_dll_directory() 卻忽略了 CTranslate2 實際上是透過 C++ 讀取 PATH 來尋找 DLL。
+
+### 正確解答
+1. **下載卡死**：必須使用 	askkill /IM python.exe /F 清除所有背景佔用的 python 進程，並刪除 ~/.cache/huggingface/hub/.locks 資料夾。在網路不佳區域，建議透過 pip install hf_transfer 開啟 Rust 加速引擎，並使用獨立腳本強制續傳。
+2. **CUDA DLL**：必須遍歷 sys.path 和 site.getsitepackages() 找到 
+vidia\cublas\bin 與 
+vidia\cudnn\bin，並使用 os.environ["PATH"] = cublas_path + os.pathsep + os.environ.get("PATH", "") 在 import faster_whisper 之前強制掛載。
+
+<<<<<<< HEAD
+### 預防防護措施
+- 處理 Windows Python 的 GPU 依賴時，除了 os.add_dll_directory()，必須同時修改 os.environ["PATH"] 才能相容跨語言呼叫的 C++ 函式庫。
+=======
+### 🛡️ 預防措施
+- pip 安裝後立即用 `where <command>` 確認入口點名稱和位置
+- MCP 配置一律使用完整路徑，不依賴 PATH
+- 維護 `hoonsor-mcp-manager` skill 來集中管理 MCP 伺服器配置
+
+### 📎 關聯
+- 對話 ID: `2e069690-a87b-494b-b532-2f7667e8eac1`
+- 日期: 2026-04-22
+- 相關 KI: `notebooklm-mcp-guide`
+
+---
+
+## 📌 教訓 #5: PowerShell 語法不相容
+
+**錯誤分類**: 環境
+**嚴重等級**: 🟡 中等
+**Token 浪費模式**: TW-04（環境假設錯誤）
+**預估浪費 Tokens**: ~6,000
+
+### 症狀
+執行含有 `&&` 或是 `grep` 的指令時，PowerShell 拋出語法錯誤：
+`無法辨識 '&&' 語法` 或 `exec: "grep": executable file not found in %PATH%`。
+
+### 根因分析
+Windows 的 PowerShell 不支援 Linux/Bash 的 `&&` 命令串接語法（除非升級到 PS 7+），且 Windows 預設沒有 `grep` 命令。
+
+### ❌ 無效嘗試
+1. 直接在 PowerShell 內執行 `&&` 或 `grep` 串接命令。
+
+### ✅ 正確解法
+- **命令串接**: 使用 `;` 取代 `&&`。
+- **搜尋文本**: 使用系統專屬的 `grep_search` API 工具，而不是在 command line 手動執行 grep。
+
+### 🛡️ 預防措施
+- 在 Windows 終端執行命令時，一律使用 `;` 代替 `&&`。
+- 搜尋程式碼時一律使用 `grep_search` 工具，不手動下 grep 命令。
+
+### 📎 關聯
+- 對話 ID: `ba1bef9c-2609-4075-b167-e5d8cc7b7c50`
+- 日期: 2026-06-13
+
+---
+
+## 📌 教訓 #6: ArtifactMetadata 參數誤用
+
+**錯誤分類**: API
+**嚴重等級**: 🟢 輕微
+**Token 浪費模式**: 無
+**預估浪費 Tokens**: ~3,000
+
+### 症狀
+`invalid tool call error (invalid_args) ... is not a valid artifact path; artifacts must be in C:\Users\...`
+
+### 根因分析
+呼叫 `write_to_file` 或 `multi_replace_file_content` 時，如果修改的不是位於 `<appDataDir>\brain\<conversation-id>\` 下的 Markdown 報告檔，但帶有 `ArtifactMetadata` 參數，系統會檢驗並拋出無效路徑錯誤。
+
+### ❌ 無效嘗試
+1. 建立或修改普通專案代碼檔（如 `src/components/views/SystemView.tsx`）時填寫了 `ArtifactMetadata`。
+
+### ✅ 正確解法
+- 建立或修改一般專案代碼檔案時，**不要** 填寫 `ArtifactMetadata` 參數。
+
+### 🛡️ 預防措施
+- 編輯一般專案原始碼檔案（如 `.ts`、`.tsx`、`.py`）時，務必將 `ArtifactMetadata` 留空。
+
+### 📎 關聯
+- 對話 ID: `ba1bef9c-2609-4075-b167-e5d8cc7b7c50`
+- 日期: 2026-06-13
+
+---
+
+## 📌 教訓 #7: lucide-react 圖示匯出遺失
+
+**錯誤分類**: 依賴
+**嚴重等級**: 🟡 中等
+**Token 浪費模式**: 無
+**預估浪費 Tokens**: ~5,000
+
+### 症狀
+Next.js / Vercel Build 失敗：
+`Export Github doesn't exist in target module`
+
+### 根因分析
+在新版本的 `lucide-react` 中，部分 Icon 命名可能不同，或是未包含在預設匯出中。在開發時若未檢查，直接導入不存的圖示，會在 Vercel 構建時觸發嚴重錯誤。
+
+### ❌ 無效嘗試
+1. 假設 Vercel 線上環境與本地完全一致，不執行本地 build 測試就推送。
+
+### ✅ 正確解法
+- 改用更通用的 Icon，或者改用 SVG 自訂渲染。
+- 程式碼推送前，於本地先執行 `npm run build` 或 `tsc --noEmit` 做編譯檢查。
+
+### 🛡️ 預防措施
+- 使用第三方圖示庫時，不使用不確定的導出名稱。
+- 每次推送 UI 程式碼前，必定在本地執行 build 以檢測依賴與導出完整度。
+
+### 📎 關聯
+- 對話 ID: `ba1bef9c-2609-4075-b167-e5d8cc7b7c50`
+- 日期: 2026-06-13
+
+---
+
+## 📌 教訓 #8: 技能掃描器忽視多層目錄
+
+**錯誤分類**: 邏輯 / 專案管理
+**嚴重等級**: 🟡 中等
+**Token 浪費模式**: TW-04（環境假設錯誤）
+**預估浪費 Tokens**: ~4,000
+
+### 症狀
+資料同步後，Vercel 監控網站上顯示的「冷凍技能數量」為 0。
+
+### 根因分析
+`_Skill_Vault` 資料夾是一個分類容器目錄，其底下的第二層子目錄（例如 `_Skill_Vault/01-Non_Core_Languages/c-pro`）才是真正包含 `SKILL.md` 的技能檔案。原先的 `scan_skills.py` 腳本只掃描了一層技能目錄（即 `skills_dir` 的直接子目錄），因此把這些大類目錄當作普通技能，因無 `SKILL.md` 而直接跳過。
+
+### ❌ 無效嘗試
+1. 嘗試不修改程式碼，直接重複執行 `sync_to_website.py` 期待快取生效。
+
+### ✅ 正確解法
+- 重構 `scan_skills.py` 的 `scan_all` 函數，在掃描 `_Skill_Vault` 時增加一圈分類目錄的遍歷，實現兩層深度的掃描，並在 `skills_slim.json` 中將它們輸出到獨立的 `frozen_skills` 屬性中。
+
+### 🛡️ 預防措施
+- 設計目錄掃描器時，要確認是否含有分類文件夾。
+- 掃描後的關鍵輸出（例如項目數）必須做防呆，若結果為 0，應拋出警示或日誌。
+
+### 📎 關聯
+- 對話 ID: `9f2855d0-3025-4ba5-930f-90da6b57ff72`
+- 日期: 2026-06-14
+
+---
+
+## 📌 教訓 #9: Web 專案僅同步數據未更新 React UI
+
+**錯誤分類**: 前端 / 邏輯
+**嚴重等級**: 🟡 中等
+**Token 浪費模式**: TW-02（方向錯誤）
+**預估浪費 Tokens**: ~6,000
+
+### 症狀
+數據已成功寫入 json 資料源並部署至網站，但網頁重新整理後依然沒有顯示冷凍技能與切換頁籤。
+
+### 根因分析
+僅透過後端腳本更新並推送了 `skills_slim.json`，但是前端 React 元件（如 `SkillsView.tsx`）並未設計並編寫讀取、呈現此新欄位的 UI 代碼，導致數據庫有資料但畫面沒有對應元件渲染。
+
+### ❌ 無效嘗試
+1. 盲目等待 Vercel 重複部署，或重整瀏覽器快取。
+
+### ✅ 正確解法
+- 同步修改 React 前端元件：
+  1. 在 `useDashboardData.ts` 中加入對 `frozen_skills` 陣列的 Hook 讀取。
+  2. 在 `SkillsView.tsx` 中新增 Tabs 切換按鈕（啟用技能 vs 冷凍技能），在卡片中標示冷凍類別，並串接搜尋與標籤篩選。
+  3. 本地執行 `npm run build` 確認構建成功後再 Push。
+
+### 🛡️ 預防措施
+- 新增/調整資料庫或 JSON 資料欄位時，必須同時審查前端 UI 呈現是否需對齊。
+- 嚴格落實「代碼推送前本地 build」的規範，確保前後端無縫整合。
+
+### 📎 關聯
+- 對話 ID: `9f2855d0-3025-4ba5-930f-90da6b57ff72`
+- 日期: 2026-06-14
+
+---
+
+## 📌 教訓 #10: 全新 Git Worktree 依賴缺失
+
+**錯誤分類**: 環境 / 依賴
+**嚴重等級**: 🟡 中等
+**Token 浪費模式**: TW-04（環境假設錯誤）
+**預估浪費 Tokens**: ~9,000
+
+### 症狀
+在全新 worktree 中直接執行 `npx prisma generate` 報錯：
+```
+Error: Cannot find module 'dotenv/config'
+```
+隨後執行 `npm install` 時因網絡不穩拋出 `network aborted (ECONNRESET)` 及 `EPERM` 權限錯誤導致中止。
+
+### 根因分析
+全新 Git Worktree 是空白資料夾，尚未還原 `node_modules` 依賴。而在國內或特定網路環境下，直連 NPM 官方 registry 容易中慢。
+
+### ❌ 無效嘗試（避免重蹈覆轍）
+1. 直接嘗試執行 prisma 命令，假設 node_modules 已存在。
+2. 直連 npm registry 反覆重試，遇到網絡中斷與暫時性權限鎖定。
+
+### ✅ 正確解法
+1. 遇到 clean worktree 目錄，必須先執行 `npm install` 還原依賴。
+2. 如遇連線中斷，應使用淘寶鏡像源 `npm install --registry=https://registry.npmmirror.com` 加快安裝並避免 aborted。
+
+### 🛡️ 預防措施
+- 新建或切換至 worktree 時，務必先還原依賴。
+- 在網路不穩定地區開發時，預設在 npm 安裝指令後加上 `--registry=https://registry.npmmirror.com`。
+
+### 📎 關聯
+- 對話 ID: `c65ea7c7-c473-453c-967c-61322cd294dd`
+- 日期: 2026-06-14
+
+---
+
+## 📌 教訓 #11: React 迴圈渲染重複 Key 錯誤
+
+**錯誤分類**: 前端
+**嚴重等級**: 🟡 中等
+**Token 浪費模式**: 無
+**預估浪費 Tokens**: 0
+
+### 症狀
+瀏覽器 Console 拋出錯誤：
+```
+Encountered two children with the same key, 'hoonsor-project-monitor'
+```
+
+### 根因分析
+在 `SystemView.tsx` 中，使用 `.map()` 渲染 `KEYWORDS` 清單時設定了 `key={kw.skill}`。但由於有兩個不同的關鍵字（「#架構」與「#狀態」）皆對應到同一個技能 `hoonsor-project-monitor`，造成 React 獲得了重複的 key 值。
+
+### ❌ 無效嘗試
+無（一次成功定位並修復）。
+
+### ✅ 正確解法
+將 React 的 loop key 更改為唯一的鍵值，在此處改用 `key={kw.trigger}`（因為 trigger 描述如「#架構」是唯一的）。
+
+### 🛡️ 預防措施
+- 使用 React 的 `.map()` 渲染清單時，必須確保作為 `key` 的屬性在資料集內是絕對唯一的。
+- 不要盲目使用 `kw.skill` 或 `id`，如果這些值在多條數據中可能重複，應結合其他欄位或使用唯一值。
+
+### 📎 關聯
+- 對話 ID: `c65ea7c7-c473-453c-967c-61322cd294dd`
+- 日期: 2026-06-14
+
+---
+
+## 📌 教訓 #12: Next.js 頁面 Hydration 警告未除
+
+**錯誤分類**: 前端
+**嚴重等級**: 🟡 中等
+**Token 浪費模式**: TW-01（盲目重試）
+**預估浪費 Tokens**: ~3,000
+
+### 症狀
+在 `<html>` 上加上了 `suppressHydrationWarning` 後，本機依然報錯：
+```
+A tree hydrated but some attributes of the server rendered HTML didn't match the client properties
+```
+
+### 根因分析
+React 的 `suppressHydrationWarning` 屬性**僅會作用在單層標籤上**（意即僅在它被宣告的那一層標籤本身有效，不會遞迴向下作用在子標籤上）。當瀏覽器擴充功能（外掛，如 1Password 等）將屬性注入到 `<body>` 標籤上時，僅在 `<html>` 上標記是無法忽略 mismatch 的。
+
+### ❌ 無效嘗試
+1. 僅在 `<html>` 標籤上加 `suppressHydrationWarning`，重整後仍然報錯。
+
+### ✅ 正確解法
+除了 `<html>` 外，同時在 **`<body>`** 標籤上也加上 `suppressHydrationWarning`。
+
+### 🛡️ 預防措施
+- 遇到 Hydration Warning 時，仔細觀察錯誤訊息中到底是在哪一個 tag 上發生了 mismatch（是 html, body 還是 div）。
+- 對於容易被外掛（密碼管理器、翻譯外掛）修改的標籤（如 html 和 body），建議同時加上 `suppressHydrationWarning`。
+
+### 📎 關聯
+- 對話 ID: `c65ea7c7-c473-453c-967c-61322cd294dd`
+- 日期: 2026-06-14
+---
+
+## 📌 教訓 #13: Excel COM 背景進程卡死與檔案鎖定
+
+**錯誤分類**: 環境
+**嚴重等級**: 🔴 高頻
+**Token 浪費模式**: TW-01（盲目重試）, TW-04（環境假設錯誤）
+**預估浪費 Tokens**: ~6,000
+
+### 症狀
+```
+pywintypes.com_error: (-2147023170, '呼叫被被呼叫者拒絕。', None, None)
+```
+或在操作 Excel 檔案時遇到 `PermissionError: [Errno 13] Permission denied`。
+
+### 根因分析
+1. Excel 活頁簿被另一個隱藏的背景 Excel 實例開啟並鎖定。
+2. 在背景自動化執行 `excel.Run` 時，VBA 程式碼內部彈出了 Modal 視窗（例如 `MsgBox`），導致背景 headless Excel 被阻塞，引發 COM RPC 呼叫超時拒絕。
+3. Python 腳本在異常發生後，未能在 `finally` 區塊中成功關閉 Excel COM 物件，導致背景殭屍進程殘留。
+
+### ❌ 無效嘗試（避免重蹈覆轍）
+1. 不終止背景進程直接重試執行腳本 → 持續拋出 PermissionError 與 COM 拒絕。
+2. 僅調用 `wb.Close()` 與 `excel.Quit()` → 若 COM 物件已處於阻塞狀態，這些調用會失敗，無法釋放檔案鎖。
+
+### ✅ 正確解法
+**防護機制**：在 Python COM 腳本的 `finally` 區塊中，加入強制清理鏈，調用 Windows PowerShell 指令強制關閉殘留的 `EXCEL.EXE` 進程：
+```python
+import subprocess
+try:
+    wb.Close(False)
+except Exception:
+    pass
+try:
+    excel.Quit()
+except Exception:
+    pass
+# 強制清理所有殘留進程
+subprocess.run(["powershell", "-Command", "Get-Process EXCEL -ErrorAction SilentlyContinue | Stop-Process -Force"], capture_output=True)
+```
+
+### 🛡️ 預防措施
+- 任何調用 win32com 操作 Excel 的 Python 腳本，**必須在 finally 區塊中加上 PowerShell 強制 kill 進程的防護碼**。
+- 自動化測試或背景執行巨集時，VBA 代碼內應避免使用 `MsgBox`，或暫時關閉警告訊息 `Application.DisplayAlerts = False`。
+
+### 📎 關聯
+- 對話 ID: cbfbfb20-dd4f-4230-a15b-90b4105a9d27
+- 日期: 2026-07-08
+
+---
+
+## 📌 教訓 #14: 掃描型/圖片型 PDF 文字提取失效
+
+**錯誤分類**: 邏輯 / 依賴
+**嚴重等級**: 🔴 高頻
+**Token 浪費模式**: TW-02（方向錯誤）
+**預估浪費 Tokens**: ~9,000
+
+### 症狀
+使用 `pdfplumber` 或 `fitz` (PyMuPDF) 讀取 PDF 檔案提取文字時，回傳空字串 `""`，即使肉眼可見文件內有文字。
+
+### 根因分析
+PDF 文件為「掃描型/圖片型 PDF」，其內部不包含任何數位文字編碼字元，只有點陣圖像。文字提取程式只對數位字元有效，無法對圖片執行文字辨識。
+
+### ❌ 無效嘗試（避免重蹈覆轍）
+1. 重複呼叫 `page.extract_text()` 並調整參數 → 結果依然為空。
+2. 嘗試調用雲端 OCR 工具（如 NotebookLM MCP `source_add` / `notebook_query`） → 被使用者拒絕使用雲端，偏向本地離線隱私處理。
+3. 嘗試在本機下載 Tesseract OCR → 需要使用者在本機手動安裝 `.exe` 軟體，造成系統干擾與環境依賴繁雜。
+
+### ✅ 正確解法
+使用 **Windows 10/11 內建的離線微軟官方 OCR 引擎**！在 Python 中安裝 `winsdk` 套件以直接存取 Windows Runtime API，執行極速的本機離線 OCR：
+```python
+import asyncio
+from winsdk.windows.storage import StorageFile
+from winsdk.windows.graphics.imaging import BitmapDecoder
+from winsdk.windows.media.ocr import OcrEngine
+from winsdk.windows.globalization import Language
+
+async def ocr_image(png_path):
+    file = await StorageFile.get_file_from_path_async(png_path)
+    stream = await file.open_read_async()
+    decoder = await BitmapDecoder.create_async(stream)
+    software_bitmap = await decoder.get_software_bitmap_async()
+    
+    engine = OcrEngine.try_create_from_language(Language("zh-Hant-TW"))
+    result = await engine.recognize_async(software_bitmap)
+    return result.text
+```
+搭配 `pypdfium2` 將 PDF 頁面渲染成 PNG 圖片，再將圖片丟入上述 OCR 函數進行辨識。
+
+### 🛡️ 預防措施
+- 處理 PDF 檔案時，應先偵測提取結果是否為空。若文字為空，自動切換至 `winsdk` 本機離線 OCR 辨識流程。
+- 在 Windows 系統上，優先使用系統內建的微軟 OCR，避免安裝額外龐大的外部 C++ 軟體（如 Tesseract）或調用外部雲端 API。
+
+### 📎 關聯
+- 對話 ID: cbfbfb20-dd4f-4230-a15b-90b4105a9d27
+- 日期: 2026-07-08
+
+---
+
+## 📌 教訓 #15: Excel VBA AutoFilter 顏色篩選強匹配限制 (Error 1004)
+
+**錯誤分類**: 邏輯
+**嚴重等級**: 🟡 中等
+**Token 浪費模式**: TW-04（環境假設錯誤）
+**預估浪費 Tokens**: ~3,000
+
+### 症狀
+執行 VBA AutoFilter 顏色篩選時拋出錯誤：
+```
+執行階段錯誤 '1004': 類別 Range 的 AutoFilter 方法失敗
+```
+
+### 根因分析
+Excel 的 `AutoFilter` 在執行背景色篩選（`Operator:=xlFilterCellColor`）時具備「強匹配與強依賴性」。如果篩選區域（Range）內**沒有任何儲存格**具備 `Criteria1` 所指定的精確 RGB 色碼值，或者該指定 RGB 值與儲存格實際著色值有些微偏差（如 `RGB(253, 233, 230)` 匹配 `16765386`），Excel 會直接中斷並拋出 1004 錯誤。
+
+### ❌ 無效嘗試
+1. 在 Criteria1 中寫死近似的 RGB 數值 → 顏色不精確相符即會崩潰。
+2. 假設篩選沒有符合的顏色時會自動保留空列表而不報錯 → 實際上直接崩潰。
+
+### ✅ 正確解法
+將著色與篩選的顏色定義為**同一個全域常數**，確保兩者精確對齊。
+```vba
+Public Const CLR_LEAVE_BG As Long = 16765386 ' RGB(250, 191, 143)
+
+' 著色段
+cell.Interior.Color = CLR_LEAVE_BG
+
+' 篩選段
+rng.AutoFilter Field:=colIdx, Criteria1:=CLR_LEAVE_BG, Operator:=xlFilterCellColor
+```
+
+### 🛡️ 預防措施
+- 任何涉及背景色篩選的 VBA 設計，必須將顏色值宣告為唯一的常數，禁止在程式碼中重複出現魔法數字（Magic Numbers）。
+- 在執行 AutoFilter 前，宜加入 On Error 捕捉保護，或先確認該列中確實有儲存格上色。
+
+### 📎 關聯
+- 對話 ID: cbfbfb20-dd4f-4230-a15b-90b4105a9d27
+- 日期: 2026-07-08
+
+---
+
+## 📌 教訓 #16: Vercel CLI 專案名稱大寫錯誤
+
+**錯誤分類**: 配置
+**嚴重等級**: 🟡 中等
+**Token 浪費模式**: TW-04（環境假設錯誤）
+**預估浪費 Tokens**: ~2,000
+
+### 症狀
+執行 
+px vercel link 或建立新專案時報錯：
+Error: Project names can be up to 100 characters long and must be lowercase. They can include letters, digits, and the following characters: '.', '_', '-'.
+
+### 根因分析
+Vercel 要求所有的專案名稱（Project Name）必須全小寫。如果本地資料夾名稱包含大寫字母（例如 Raphael-Mindmap-Data），預設使用資料夾名稱作為專案名稱時就會直接報錯失敗。
+
+### ❌ 無效嘗試
+1. 加上 --yes 參數試圖跳過詢問強行建立專案。
+
+### ✅ 正確解法
+將本地資料夾名稱重新命名為全小寫（或是在 link 互動模式中手動輸入全小寫的名稱）。在 Windows 中，由於路徑不區分大小寫，可以使用 Rename-Item temp 再改回 Rename-Item lowercase 的方式。
+
+### 🛡️ 預防措施
+- 使用 Vercel CLI 部署前，確保資料夾名稱全小寫，或使用 --project 指定全小寫名稱。
+
+### 📎 關聯
+- 對話 ID: dbb84cba-4a0b-4f29-a706-76a9d4365286
+- 日期: 2026-07-27
+
+---
+
+## 📌 教訓 #17: Python 讀取檔案 Unicode 解碼錯誤
+
+**錯誤分類**: 環境
+**嚴重等級**: 🟡 中等
+**Token 浪費模式**: TW-04（環境假設錯誤）
+**預估浪費 Tokens**: ~2,000
+
+### 症狀
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0xbc in position 0: invalid start byte
+
+### 根因分析
+Python 在 Windows 上預設讀取文本檔案時，若未指定正確編碼或檔案內包含不合法的多字節序列，會拋出解碼錯誤。特別是讀取系統生成的 log 檔或混合編碼的檔案時。
+
+### ❌ 無效嘗試
+無（一次定位成功）。
+
+### ✅ 正確解法
+在 open(..., encoding='utf-8') 中加上 errors='replace' 或 errors='ignore' 參數，讓無法解碼的字元被替換成 ?，保證腳本順利執行不崩潰。
+
+### 🛡️ 預防措施
+- 在後台代理腳本讀取不受控的 log 檔或文本檔時，一律加上 errors='replace' 作為防護。
+
+### 📎 關聯
+- 對話 ID: dbb84cba-4a0b-4f29-a706-76a9d4365286
+- 日期: 2026-07-27
+
+---
+
+## 📌 教訓 #18: Bash字串內嵌反引號(`)跳脫失效
+
+**錯誤分類**: 環境
+**嚴重等級**: 🔴 高頻
+**Token 浪費模式**: TW-01
+**預估浪費 Tokens**: ~6,000
+
+### 症狀
+在使用 Python 的 f-string 構造 bash 指令（`bash -c "..."`）並傳送到遠端執行時，字串內包含了 Markdown 的程式碼區塊符號 ` ```text `。因為沒有正確跳脫，bash 將其解析為命令執行（Command Substitution），導致命令靜默失敗，產出的檔案內容破損，並引發後續連鎖錯誤。
+
+### 根因分析
+在 shell 中，反引號 (`` ` ``) 具有特殊的執行語義。當在雙引號 `"..."` 內部出現反引號時，bash 會嘗試將其內部的文字當作指令執行。Python f-string 的跳脫層級不足以應付這種多層次嵌套（Python字串 -> SSH指令 -> Bash引號內文 -> 命令替換）。
+
+### ❌ 無效嘗試
+1. **盲目等待與重試 (`TW-01`)**：未檢查 stdout/stderr 輸出日誌，就以為腳本正常運作，重複執行 `smart_heartbeat.py` 浪費大量時間與 tokens 等待根本不存在的結果。
+
+### ✅ 正確解法
+如果在 Python 字串內一定要產生反引號並交由 bash 解析，必須加上足夠數量的反斜線：`f"echo \\\"\\\`\\\`\\\`text\\\""`。
+**更佳解法**：絕對避免將大段的複雜多行字串或特殊符號直接寫在 `bash -c "..."` 內部。應改用生成暫存的 `.sh` 腳本檔案，再透過 bash 執行腳本檔案。
+
+### 🛡️ 預防措施
+- 在涉及跨語言、跨環境（如 Python -> SSH -> Bash）的字串傳遞時，禁止直接在行內構造複雜跳脫，一律使用外部腳本檔案或標準輸出重導向來避免語法解析衝突。
+- 背景任務執行後，務必第一時間檢查 `.out` 或 `.log` 確認啟動是否真正成功。
+
+### 📎 關聯
+- 對話 ID: dbb84cba-4a0b-4f29-a706-76a9d4365286
+- 日期: 2026-07-27
+
+---
+
+## 📌 教訓 #19: ECharts Tree 缺乏動態虛擬高度導致重疊
+
+**錯誤分類**: 前端
+**嚴重等級**: 🔴 高危險
+**Token 浪費模式**: TW-02
+**預估浪費 Tokens**: ~15,000
+
+### 症狀
+在升級心智圖介面時，使用了 ECharts 的 `tree` 系列（正交排版），但未設定 `height`，導致數十個節點擠在同一個螢幕高度（預設 ~800px）內。節點文字與方塊嚴重重疊，介面完全無法閱讀。
+
+### 根因分析
+ECharts Tree Layout 在沒有給定具體的圖表高度時，預設會自適應其 Container DOM 的尺寸。當分支極多、樹狀圖極大時，排版引擎為了把所有節點塞進有限的高度內，只能無視文字高度互相覆蓋。初代版本之所以不會重疊，是因為寫了基於葉節點數量的動態高度計算 `virtualHeight = totalLeaves * 90`。升級版本時遺漏了這個核心排版邏輯。
+
+### ❌ 無效嘗試
+1. **方向錯誤 (`TW-02`)**：沒有回頭檢視「原本為什麼會成功」，反而持續在充滿缺陷的新版本上嘗試修補，並試圖加入縮放按鈕來解決根本的排版重疊問題，完全偏離了正確的方向，耗費大量 tokens 開發無用代碼。
+
+### ✅ 正確解法
+當使用 ECharts 繪製大型樹狀結構圖時，必須基於資料量（特別是葉節點 `countLeaves` 的數量）動態計算並賦予圖表高度（`height: virtualHeight`）。
+針對瀏覽器原生縮放（`Ctrl + 滾輪`）與 ECharts 重繪造成的字體重疊問題，必須在 `window.onresize` 中加入防抖動（Debounce），延遲 `myChart.resize()` 的執行。
+
+### 🛡️ 預防措施
+- 在重構或升級任何現有可運行專案時，**必須先徹底理解原先成功版本的核心邏輯與排版機制**，不能憑空臆測或偷懶省略邏輯。
+- 當新的實作產生災難性結果時，應立即果斷放棄錯誤方向，回歸舊版並在舊版基礎上漸進式修改，而非在錯誤地基上疊加解法。
+
+### 📎 關聯
+- 對話 ID: dbb84cba-4a0b-4f29-a706-76a9d4365286
+- 日期: 2026-07-27
+
 ## 📌 教訓: VBA 差假查詢忽略「送審中」狀態導致漏抓
 
 **錯誤分類**: 邏輯
@@ -751,3 +1396,4 @@ If strStatus = "已簽核" Or strStatus = "審核完成" Or strStatus = "送審�
 ### 📎 關聯
 - 對話 ID: 32c05ddd-8e67-4b6f-a42c-cfad45eb41ed
 - 日期: 2026-09-11
+>>>>>>> 5509786 (chore: auto-sync configuration, skills, and templates (v1.4.0))
